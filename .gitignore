@@ -1,0 +1,12 @@
+bin/
+gen/
+*.gkdb
+.env
+coverage.out
+testdata/certs/
+*.gkdb
+client
+server
+bin/
+coverage.out
+certs/

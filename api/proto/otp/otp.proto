@@ -1,0 +1,28 @@
+// Package otp defines TOTP code generation and validation RPCs.
+syntax = "proto3";
+
+package otp;
+
+option go_package = "github.com/efremov/gophkeeper/gen/otp";
+
+import "google/api/annotations.proto";
+
+// OTPService provides server-side TOTP validation for vault OTP entries.
+service OTPService {
+  // ValidateCode checks a TOTP code against a vault OTP item's encrypted seed.
+  rpc ValidateCode(ValidateCodeRequest) returns (ValidateCodeResponse) {
+    option (google.api.http) = {
+      post: "/v1/otp/validate"
+      body: "*"
+    };
+  }
+}
+
+message ValidateCodeRequest {
+  // item_id is the vault item ID containing the encrypted TOTP seed.
+  string item_id = 1;
+  string code = 2;
+}
+message ValidateCodeResponse {
+  bool valid = 1;
+}
