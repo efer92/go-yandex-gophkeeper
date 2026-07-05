@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package common;
 
-option go_package = "github.com/efremov/gophkeeper/gen/common";
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/common";
 
 import "google/protobuf/timestamp.proto";
 

@@ -1,4 +1,4 @@
-module github.com/efremov/gophkeeper
+module github.com/efer92/go-yandex-gophkeeper
 
 go 1.26.2
 

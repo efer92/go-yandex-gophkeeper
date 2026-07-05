@@ -1,4 +1,4 @@
-MODULE     := github.com/efremov/gophkeeper
+MODULE     := github.com/efer92/go-yandex-gophkeeper
 VERSION    := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS    := -ldflags "-X $(MODULE)/internal/shared/version.Version=$(VERSION) \

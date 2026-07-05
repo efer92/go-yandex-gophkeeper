@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package vault;
 
-option go_package = "github.com/efremov/gophkeeper/gen/vault";
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/vault";
 
 import "common/common.proto";
 import "google/api/annotations.proto";

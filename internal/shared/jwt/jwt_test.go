@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	jwtpkg "github.com/efremov/gophkeeper/internal/shared/jwt"
+	jwtpkg "github.com/efer92/go-yandex-gophkeeper/internal/shared/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

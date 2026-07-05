@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/efremov/gophkeeper/internal/shared/audit"
+	"github.com/efer92/go-yandex-gophkeeper/internal/shared/audit"
 	"github.com/stretchr/testify/assert"
 )
 

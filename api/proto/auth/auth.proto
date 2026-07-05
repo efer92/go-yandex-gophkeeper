@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "github.com/efremov/gophkeeper/gen/auth";
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/auth";
 
 import "google/api/annotations.proto";
 

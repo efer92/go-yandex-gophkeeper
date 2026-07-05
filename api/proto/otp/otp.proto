@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package otp;
 
-option go_package = "github.com/efremov/gophkeeper/gen/otp";
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/otp";
 
 import "google/api/annotations.proto";
 

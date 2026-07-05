@@ -8,14 +8,14 @@ import (
 
 	"google.golang.org/grpc"
 
-	authpb "github.com/efremov/gophkeeper/gen/auth"
-	syncpb "github.com/efremov/gophkeeper/gen/sync"
-	vaultpb "github.com/efremov/gophkeeper/gen/vault"
-	clientcfg "github.com/efremov/gophkeeper/internal/client/config"
-	"github.com/efremov/gophkeeper/internal/server/handler"
-	"github.com/efremov/gophkeeper/internal/server/middleware"
-	"github.com/efremov/gophkeeper/internal/server/service"
-	jwtpkg "github.com/efremov/gophkeeper/internal/shared/jwt"
+	authpb "github.com/efer92/go-yandex-gophkeeper/gen/auth"
+	syncpb "github.com/efer92/go-yandex-gophkeeper/gen/sync"
+	vaultpb "github.com/efer92/go-yandex-gophkeeper/gen/vault"
+	clientcfg "github.com/efer92/go-yandex-gophkeeper/internal/client/config"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/handler"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/middleware"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/service"
+	jwtpkg "github.com/efer92/go-yandex-gophkeeper/internal/shared/jwt"
 )
 
 // TestServer is an in-process gRPC server backed by MockStore, intended for

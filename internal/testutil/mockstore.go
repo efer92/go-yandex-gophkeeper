@@ -3,11 +3,12 @@ package testutil
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 
-	jwtpkg "github.com/efremov/gophkeeper/internal/shared/jwt"
-	"github.com/efremov/gophkeeper/internal/server/storage"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/storage"
+	jwtpkg "github.com/efer92/go-yandex-gophkeeper/internal/shared/jwt"
 )
 
 // NewTestJWT builds a JWT manager with a short TTL suitable for unit tests.
@@ -169,7 +170,7 @@ func (m *MockVault) Create(_ context.Context, item storage.VaultItem) (storage.V
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Seq++
-	item.ID = "item-" + string(rune('0'+m.Seq))
+	item.ID = "item-" + strconv.Itoa(m.Seq)
 	item.Version = 1
 	m.Items[item.ID] = item
 	return item, nil

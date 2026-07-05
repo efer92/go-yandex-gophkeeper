@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package sync;
 
-option go_package = "github.com/efremov/gophkeeper/gen/sync";
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/sync";
 
 import "common/common.proto";
 

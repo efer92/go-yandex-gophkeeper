@@ -14,10 +14,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	pgstore "github.com/efremov/gophkeeper/internal/server/storage/postgres"
-	"github.com/efremov/gophkeeper/internal/server/service"
-	jwtpkg "github.com/efremov/gophkeeper/internal/shared/jwt"
-	"github.com/efremov/gophkeeper/internal/shared/crypto"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/service"
+	pgstore "github.com/efer92/go-yandex-gophkeeper/internal/server/storage/postgres"
+	"github.com/efer92/go-yandex-gophkeeper/internal/shared/crypto"
+	jwtpkg "github.com/efer92/go-yandex-gophkeeper/internal/shared/jwt"
 )
 
 func startPostgres(t *testing.T) string {

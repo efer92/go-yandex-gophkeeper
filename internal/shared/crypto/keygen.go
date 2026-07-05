@@ -13,22 +13,22 @@ import (
 	"fmt"
 	"io"
 
+	"crypto/sha256"
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/ssh"
-	"crypto/sha256"
 )
 
 // KeyType enumerates supported key types.
 type KeyType string
 
 const (
-	KeyTypeRaw      KeyType = "raw"       // 32-byte symmetric key (hex)
-	KeyTypeEd25519  KeyType = "ed25519"   // Ed25519 SSH key pair
-	KeyTypeRSA2048  KeyType = "rsa2048"   // RSA 2048-bit key pair
-	KeyTypeRSA4096  KeyType = "rsa4096"   // RSA 4096-bit key pair
-	KeyTypeP256     KeyType = "p256"      // ECDSA P-256 key pair
-	KeyTypeP384     KeyType = "p384"      // ECDSA P-384 key pair
-	KeyTypeX25519   KeyType = "x25519"    // X25519 Diffie-Hellman key pair
+	KeyTypeRaw     KeyType = "raw"     // 32-byte symmetric key (hex)
+	KeyTypeEd25519 KeyType = "ed25519" // Ed25519 SSH key pair
+	KeyTypeRSA2048 KeyType = "rsa2048" // RSA 2048-bit key pair
+	KeyTypeRSA4096 KeyType = "rsa4096" // RSA 4096-bit key pair
+	KeyTypeP256    KeyType = "p256"    // ECDSA P-256 key pair
+	KeyTypeP384    KeyType = "p384"    // ECDSA P-384 key pair
+	KeyTypeX25519  KeyType = "x25519"  // X25519 Diffie-Hellman key pair
 )
 
 // GeneratedKey holds a key pair in PEM (or raw hex) format.
@@ -77,7 +77,7 @@ func DeriveKeyFromMaster(masterKey []byte, realm string, keyType KeyType) (Gener
 	case KeyTypeEd25519:
 		return generateEd25519(reader)
 	case KeyTypeP256:
-		return generateECDSA(elliptic.P256()) // ECDSA does not accept an arbitrary io.Reader; falls back to rand.Reader
+		return deriveECDSAP256(reader)
 	case KeyTypeX25519:
 		return generateX25519(reader)
 	case KeyTypeRSA2048, KeyTypeRSA4096:
@@ -156,6 +156,36 @@ func generateRSAFromReader(r io.Reader, bits int) (GeneratedKey, error) {
 		kt = KeyTypeRSA4096
 	}
 	return GeneratedKey{Type: kt, PrivateKey: privPEM, PublicKey: pubPEM}, nil
+}
+
+// deriveECDSAP256 deterministically derives a P-256 key pair from the byte stream.
+// ecdsa.GenerateKey does not guarantee stable output for a given reader, so the
+// private scalar is read directly from the stream and validated via crypto/ecdh
+// (rejection sampling: out-of-range scalars are skipped and the next block is read).
+func deriveECDSAP256(r io.Reader) (GeneratedKey, error) {
+	buf := make([]byte, 32)
+	for {
+		if _, err := io.ReadFull(r, buf); err != nil {
+			return GeneratedKey{}, fmt.Errorf("read p256 scalar: %w", err)
+		}
+		privKey, err := ecdh.P256().NewPrivateKey(buf)
+		if err != nil {
+			continue // scalar outside [1, N-1]; take the next stream block
+		}
+		privDER, err := x509.MarshalPKCS8PrivateKey(privKey)
+		if err != nil {
+			return GeneratedKey{}, fmt.Errorf("marshal p256 private: %w", err)
+		}
+		pubDER, err := x509.MarshalPKIXPublicKey(privKey.PublicKey())
+		if err != nil {
+			return GeneratedKey{}, fmt.Errorf("marshal p256 public: %w", err)
+		}
+		return GeneratedKey{
+			Type:       KeyTypeP256,
+			PrivateKey: pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privDER}),
+			PublicKey:  pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER}),
+		}, nil
+	}
 }
 
 func generateECDSA(curve elliptic.Curve) (GeneratedKey, error) {

@@ -1,11 +1,12 @@
 package crypto_test
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"testing"
 
-	"github.com/efremov/gophkeeper/internal/shared/crypto"
+	"github.com/efer92/go-yandex-gophkeeper/internal/shared/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,9 +33,9 @@ func TestGenerateKey_RSA2048(t *testing.T) {
 
 	// Verify it's actually 2048-bit RSA.
 	priv := parsePKCS8(t, k.PrivateKey)
-	rsaKey, ok := priv.(*rsa_key)
-	_ = rsaKey
-	_ = ok
+	rsaKey, ok := priv.(*rsa.PrivateKey)
+	require.True(t, ok, "expected *rsa.PrivateKey, got %T", priv)
+	assert.Equal(t, 2048, rsaKey.N.BitLen())
 }
 
 func TestGenerateKey_P256(t *testing.T) {
@@ -64,11 +65,15 @@ func TestGenerateKey_Uniqueness(t *testing.T) {
 
 func TestDeriveKeyFromMaster_Deterministic(t *testing.T) {
 	masterKey := make([]byte, 32)
-	k1, err := crypto.DeriveKeyFromMaster(masterKey, "github.com", crypto.KeyTypeEd25519)
-	require.NoError(t, err)
-	k2, err := crypto.DeriveKeyFromMaster(masterKey, "github.com", crypto.KeyTypeEd25519)
-	require.NoError(t, err)
-	assert.Equal(t, k1.PrivateKey, k2.PrivateKey, "same inputs must produce same key")
+	for _, kt := range []crypto.KeyType{crypto.KeyTypeRaw, crypto.KeyTypeEd25519, crypto.KeyTypeP256, crypto.KeyTypeX25519} {
+		t.Run(string(kt), func(t *testing.T) {
+			k1, err := crypto.DeriveKeyFromMaster(masterKey, "github.com", kt)
+			require.NoError(t, err)
+			k2, err := crypto.DeriveKeyFromMaster(masterKey, "github.com", kt)
+			require.NoError(t, err)
+			assert.Equal(t, k1.PrivateKey, k2.PrivateKey, "same inputs must produce same key")
+		})
+	}
 }
 
 func TestDeriveKeyFromMaster_DifferentRealms(t *testing.T) {
@@ -95,8 +100,6 @@ func TestDeriveKeyFromMaster_Raw(t *testing.T) {
 }
 
 // helpers
-
-type rsa_key struct{}
 
 func assertValidPEM(t *testing.T, data []byte, expectedType string) {
 	t.Helper()

@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pgstore "github.com/efremov/gophkeeper/internal/server/storage/postgres"
-	"github.com/efremov/gophkeeper/internal/server/service"
-	"github.com/efremov/gophkeeper/internal/server/storage"
-	jwtpkg "github.com/efremov/gophkeeper/internal/shared/jwt"
-	"github.com/efremov/gophkeeper/internal/shared/crypto"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/service"
+	"github.com/efer92/go-yandex-gophkeeper/internal/server/storage"
+	pgstore "github.com/efer92/go-yandex-gophkeeper/internal/server/storage/postgres"
+	"github.com/efer92/go-yandex-gophkeeper/internal/shared/crypto"
+	jwtpkg "github.com/efer92/go-yandex-gophkeeper/internal/shared/jwt"
 )
 
 func TestVaultCRUD(t *testing.T) {
