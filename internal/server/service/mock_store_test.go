@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
 	"github.com/efer92/go-yandex-gophkeeper/internal/server/storage"
@@ -134,7 +135,7 @@ func (m *mockVault) Create(_ context.Context, item storage.VaultItem) (storage.V
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.seq++
-	item.ID = "item-" + string(rune('0'+m.seq))
+	item.ID = "item-" + strconv.Itoa(m.seq)
 	item.Version = 1
 	m.items[item.ID] = item
 	return item, nil
