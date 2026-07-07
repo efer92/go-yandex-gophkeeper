@@ -1,0 +1,9 @@
+/bin/
+*.gkdb
+.env
+coverage.out
+testdata/certs/
+certs/
+/client
+/server
+/gophkeeper

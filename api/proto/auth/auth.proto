@@ -1,0 +1,141 @@
+// Package auth defines authentication and MFA RPC services.
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/auth";
+
+import "google/api/annotations.proto";
+
+// AuthService handles user registration, login, token refresh, and MFA.
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/register"
+      body: "*"
+    };
+  }
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {post: "/v1/auth/logout" body: "*"};
+  }
+  rpc EnrollTOTP(EnrollTOTPRequest) returns (EnrollTOTPResponse);
+  rpc ConfirmTOTP(ConfirmTOTPRequest) returns (ConfirmTOTPResponse);
+  rpc VerifyMFA(VerifyMFARequest) returns (VerifyMFAResponse);
+  rpc BeginWebAuthnRegister(BeginWebAuthnRegisterRequest) returns (BeginWebAuthnRegisterResponse);
+  rpc FinishWebAuthnRegister(FinishWebAuthnRegisterRequest) returns (FinishWebAuthnRegisterResponse);
+  rpc BeginWebAuthnLogin(BeginWebAuthnLoginRequest) returns (BeginWebAuthnLoginResponse);
+  rpc FinishWebAuthnLogin(FinishWebAuthnLoginRequest) returns (FinishWebAuthnLoginResponse);
+}
+
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  // vault_sym_key is the vault symmetric key encrypted client-side with the stretched master key.
+  bytes vault_sym_key = 4;
+  // kdf_params_json is the serialized Argon2id parameters used for key derivation.
+  string kdf_params_json = 5;
+}
+message RegisterResponse {
+  string user_id = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  // needs_mfa is true when the account has MFA enabled; client must call VerifyMFA.
+  bool needs_mfa = 3;
+  string session_id = 4;
+  // kdf_params_json lets the client re-derive the master key after login.
+  string kdf_params_json = 5;
+  // vault_sym_key is the encrypted vault symmetric key; client decrypts with stretched master key.
+  bytes vault_sym_key = 6;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+message RefreshResponse {
+  string access_token = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+message LogoutResponse {}
+
+message EnrollTOTPRequest {
+  string label = 1;
+}
+message EnrollTOTPResponse {
+  string totp_id = 1;
+  string secret = 2;
+  string otpauth_url = 3;
+}
+
+message ConfirmTOTPRequest {
+  string totp_id = 1;
+  string code = 2;
+}
+message ConfirmTOTPResponse {
+  bool ok = 1;
+}
+
+message VerifyMFARequest {
+  string session_id = 1;
+  string totp_code = 2;
+}
+message VerifyMFAResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message BeginWebAuthnRegisterRequest {
+  string device_name = 1;
+}
+message BeginWebAuthnRegisterResponse {
+  string options_json = 1;
+  string session_id = 2;
+}
+
+message FinishWebAuthnRegisterRequest {
+  string session_id = 1;
+  string credential_json = 2;
+  string device_name = 3;
+}
+message FinishWebAuthnRegisterResponse {
+  bool ok = 1;
+}
+
+message BeginWebAuthnLoginRequest {
+  string username = 1;
+}
+message BeginWebAuthnLoginResponse {
+  string options_json = 1;
+  string session_id = 2;
+}
+
+message FinishWebAuthnLoginRequest {
+  string session_id = 1;
+  string credential_json = 2;
+}
+message FinishWebAuthnLoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}

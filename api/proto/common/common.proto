@@ -1,0 +1,34 @@
+// Package common contains shared types for GophKeeper services.
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/common";
+
+import "google/protobuf/timestamp.proto";
+
+// ItemType enumerates all supported vault item categories.
+enum ItemType {
+  ITEM_TYPE_UNSPECIFIED = 0;
+  CREDENTIAL = 1;
+  TEXT = 2;
+  BINARY = 3;
+  CARD = 4;
+  OTP = 5;
+}
+
+// VaultItem is the wire representation of a single encrypted vault entry.
+// The payload is always encrypted client-side; the server is zero-knowledge.
+message VaultItem {
+  string id = 1;
+  string user_id = 2;
+  ItemType type = 3;
+  // payload is ChaCha20-Poly1305 encrypted JSON blob produced by the client.
+  bytes payload = 4;
+  // metadata is plaintext free-form text (labels, tags, website).
+  string metadata = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  // version is a monotonic counter for conflict detection during sync.
+  int64 version = 8;
+}

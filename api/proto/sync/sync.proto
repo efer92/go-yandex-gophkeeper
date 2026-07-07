@@ -1,0 +1,39 @@
+// Package sync defines real-time delta synchronization between clients.
+syntax = "proto3";
+
+package sync;
+
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/sync";
+
+import "common/common.proto";
+
+// SyncService streams vault mutations to all connected clients of the same user.
+service SyncService {
+  // Subscribe opens a server-streaming channel that delivers vault deltas.
+  // The client sends its current known item versions; the server immediately
+  // streams any missing or updated items, then keeps the stream open for future changes.
+  rpc Subscribe(SubscribeRequest) returns (stream SyncEvent);
+}
+
+message SubscribeRequest {
+  // known_versions is the list of item IDs and versions the client already has.
+  repeated ItemVersion known_versions = 1;
+}
+
+message ItemVersion {
+  string item_id = 1;
+  int64 version = 2;
+}
+
+// SyncEvent is a single delta pushed to the client.
+message SyncEvent {
+  enum EventType {
+    UPSERT = 0;
+    DELETE = 1;
+  }
+  EventType type = 1;
+  // item is populated for UPSERT events.
+  common.VaultItem item = 2;
+  // deleted_id is populated for DELETE events.
+  string deleted_id = 3;
+}

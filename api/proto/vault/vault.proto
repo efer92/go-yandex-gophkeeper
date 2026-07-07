@@ -1,0 +1,75 @@
+// Package vault defines CRUD operations on encrypted vault items.
+syntax = "proto3";
+
+package vault;
+
+option go_package = "github.com/efer92/go-yandex-gophkeeper/gen/vault";
+
+import "common/common.proto";
+import "google/api/annotations.proto";
+
+// VaultService provides zero-knowledge CRUD for encrypted vault items.
+// All payloads are encrypted by the client; the server stores ciphertext only.
+service VaultService {
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse) {
+    option (google.api.http) = {
+      post: "/v1/vault/items"
+      body: "*"
+    };
+  }
+  rpc GetItem(GetItemRequest) returns (GetItemResponse) {
+    option (google.api.http) = {get: "/v1/vault/items/{id}"};
+  }
+  rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse) {
+    option (google.api.http) = {
+      put: "/v1/vault/items/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteItem(DeleteItemRequest) returns (DeleteItemResponse) {
+    option (google.api.http) = {delete: "/v1/vault/items/{id}"};
+  }
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse) {
+    option (google.api.http) = {get: "/v1/vault/items"};
+  }
+}
+
+message CreateItemRequest {
+  common.ItemType type = 1;
+  bytes payload = 2;
+  string metadata = 3;
+}
+message CreateItemResponse {
+  common.VaultItem item = 1;
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+message GetItemResponse {
+  common.VaultItem item = 1;
+}
+
+message UpdateItemRequest {
+  string id = 1;
+  bytes payload = 2;
+  string metadata = 3;
+}
+message UpdateItemResponse {
+  common.VaultItem item = 1;
+}
+
+message DeleteItemRequest {
+  string id = 1;
+}
+message DeleteItemResponse {}
+
+message ListItemsRequest {
+  common.ItemType type_filter = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+message ListItemsResponse {
+  repeated common.VaultItem items = 1;
+  string next_cursor = 2;
+}
