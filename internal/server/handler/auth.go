@@ -27,11 +27,11 @@ func NewAuthHandler(authSvc *service.AuthService, mfaSvc *service.MFAService) *A
 // Register creates a new user account.
 func (h *AuthHandler) Register(ctx context.Context, req *authpb.RegisterRequest) (*authpb.RegisterResponse, error) {
 	result, err := h.authSvc.Register(ctx, service.RegisterInput{
-		Username:      req.Username,
-		Email:         req.Email,
-		Password:      req.Password,
-		VaultSymKey:   req.VaultSymKey,
-		KDFParamsJSON: req.KdfParamsJson,
+		Username:      req.GetUsername(),
+		Email:         req.GetEmail(),
+		Password:      req.GetPassword(),
+		VaultSymKey:   req.GetVaultSymKey(),
+		KDFParamsJSON: req.GetKdfParamsJson(),
 	})
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
@@ -39,14 +39,14 @@ func (h *AuthHandler) Register(ctx context.Context, req *authpb.RegisterRequest)
 		}
 		return nil, status.Error(codes.Internal, "registration failed")
 	}
-	return &authpb.RegisterResponse{UserId: result.UserID}, nil
+	return authpb.RegisterResponse_builder{UserId: result.UserID}.Build(), nil
 }
 
 // Login authenticates a user and returns tokens.
 func (h *AuthHandler) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
 	result, err := h.authSvc.Login(ctx, service.LoginInput{
-		Username: req.Username,
-		Password: req.Password,
+		Username: req.GetUsername(),
+		Password: req.GetPassword(),
 	})
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
@@ -54,29 +54,33 @@ func (h *AuthHandler) Login(ctx context.Context, req *authpb.LoginRequest) (*aut
 		}
 		return nil, status.Error(codes.Internal, "login failed")
 	}
-	return &authpb.LoginResponse{
+	return authpb.LoginResponse_builder{
 		AccessToken:   result.AccessToken,
 		RefreshToken:  result.RefreshToken,
 		NeedsMfa:      result.NeedsMFA,
 		SessionId:     result.SessionID,
 		KdfParamsJson: result.KDFParamsJSON,
 		VaultSymKey:   result.VaultSymKey,
-	}, nil
+	}.Build(), nil
 }
 
 // Refresh exchanges a valid refresh token for a new access token.
 func (h *AuthHandler) Refresh(ctx context.Context, req *authpb.RefreshRequest) (*authpb.RefreshResponse, error) {
-	token, err := h.authSvc.Refresh(ctx, req.RefreshToken)
+	token, err := h.authSvc.Refresh(ctx, req.GetRefreshToken())
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid refresh token")
 	}
-	return &authpb.RefreshResponse{AccessToken: token}, nil
+	return authpb.RefreshResponse_builder{AccessToken: token}.Build(), nil
 }
 
 // Logout invalidates the provided refresh token.
 func (h *AuthHandler) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
-	_ = h.authSvc.Logout(ctx, "", req.RefreshToken)
-	return &authpb.LogoutResponse{}, nil
+	userID, ok := userIDFromCtx(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+	_ = h.authSvc.Logout(ctx, userID, req.GetRefreshToken())
+	return authpb.LogoutResponse_builder{}.Build(), nil
 }
 
 // EnrollTOTP generates a new TOTP secret and returns the otpauth URL for QR display.
@@ -85,15 +89,15 @@ func (h *AuthHandler) EnrollTOTP(ctx context.Context, req *authpb.EnrollTOTPRequ
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	result, err := h.mfaSvc.EnrollTOTP(ctx, userID, req.Label)
+	result, err := h.mfaSvc.EnrollTOTP(ctx, userID, req.GetLabel())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "enroll totp failed")
 	}
-	return &authpb.EnrollTOTPResponse{
+	return authpb.EnrollTOTPResponse_builder{
 		TotpId:     result.TOTPID,
 		Secret:     result.Secret,
 		OtpauthUrl: result.OTPAuthURL,
-	}, nil
+	}.Build(), nil
 }
 
 // ConfirmTOTP verifies the first TOTP code and activates MFA for the user.
@@ -102,10 +106,10 @@ func (h *AuthHandler) ConfirmTOTP(ctx context.Context, req *authpb.ConfirmTOTPRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	if err := h.mfaSvc.ConfirmTOTP(ctx, userID, req.TotpId, req.Code); err != nil {
-		return &authpb.ConfirmTOTPResponse{Ok: false}, nil
+	if err := h.mfaSvc.ConfirmTOTP(ctx, userID, req.GetTotpId(), req.GetCode()); err != nil {
+		return authpb.ConfirmTOTPResponse_builder{Ok: false}.Build(), nil
 	}
-	return &authpb.ConfirmTOTPResponse{Ok: true}, nil
+	return authpb.ConfirmTOTPResponse_builder{Ok: true}.Build(), nil
 }
 
 // VerifyMFA validates a TOTP code for an in-progress MFA session and issues tokens.
@@ -116,8 +120,8 @@ func (h *AuthHandler) VerifyMFA(ctx context.Context, req *authpb.VerifyMFAReques
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
 	result, err := h.mfaSvc.VerifyTOTP(ctx, service.VerifyMFAInput{
-		SessionID: req.SessionId,
-		TOTPCode:  req.TotpCode,
+		SessionID: req.GetSessionId(),
+		TOTPCode:  req.GetTotpCode(),
 		UserID:    userID,
 	})
 	if err != nil {
@@ -126,8 +130,8 @@ func (h *AuthHandler) VerifyMFA(ctx context.Context, req *authpb.VerifyMFAReques
 		}
 		return nil, status.Error(codes.Internal, "mfa verification failed")
 	}
-	return &authpb.VerifyMFAResponse{
+	return authpb.VerifyMFAResponse_builder{
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
-	}, nil
+	}.Build(), nil
 }

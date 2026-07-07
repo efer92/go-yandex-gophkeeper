@@ -13,7 +13,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -65,17 +64,11 @@ func (x SyncEvent_EventType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use SyncEvent_EventType.Descriptor instead.
-func (SyncEvent_EventType) EnumDescriptor() ([]byte, []int) {
-	return file_sync_sync_proto_rawDescGZIP(), []int{2, 0}
-}
-
 type SubscribeRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// known_versions is the list of item IDs and versions the client already has.
-	KnownVersions []*ItemVersion `protobuf:"bytes,1,rep,name=known_versions,json=knownVersions,proto3" json:"known_versions,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_KnownVersions *[]*ItemVersion        `protobuf:"bytes,1,rep,name=known_versions,json=knownVersions,proto3"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *SubscribeRequest) Reset() {
@@ -103,24 +96,40 @@ func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
-func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return file_sync_sync_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *SubscribeRequest) GetKnownVersions() []*ItemVersion {
 	if x != nil {
-		return x.KnownVersions
+		if x.xxx_hidden_KnownVersions != nil {
+			return *x.xxx_hidden_KnownVersions
+		}
 	}
 	return nil
 }
 
+func (x *SubscribeRequest) SetKnownVersions(v []*ItemVersion) {
+	x.xxx_hidden_KnownVersions = &v
+}
+
+type SubscribeRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// known_versions is the list of item IDs and versions the client already has.
+	KnownVersions []*ItemVersion
+}
+
+func (b0 SubscribeRequest_builder) Build() *SubscribeRequest {
+	m0 := &SubscribeRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_KnownVersions = &b.KnownVersions
+	return m0
+}
+
 type ItemVersion struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
-	Version       int64                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ItemId  string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3"`
+	xxx_hidden_Version int64                  `protobuf:"varint,2,opt,name=version,proto3"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ItemVersion) Reset() {
@@ -148,35 +157,52 @@ func (x *ItemVersion) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ItemVersion.ProtoReflect.Descriptor instead.
-func (*ItemVersion) Descriptor() ([]byte, []int) {
-	return file_sync_sync_proto_rawDescGZIP(), []int{1}
-}
-
 func (x *ItemVersion) GetItemId() string {
 	if x != nil {
-		return x.ItemId
+		return x.xxx_hidden_ItemId
 	}
 	return ""
 }
 
 func (x *ItemVersion) GetVersion() int64 {
 	if x != nil {
-		return x.Version
+		return x.xxx_hidden_Version
 	}
 	return 0
 }
 
+func (x *ItemVersion) SetItemId(v string) {
+	x.xxx_hidden_ItemId = v
+}
+
+func (x *ItemVersion) SetVersion(v int64) {
+	x.xxx_hidden_Version = v
+}
+
+type ItemVersion_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ItemId  string
+	Version int64
+}
+
+func (b0 ItemVersion_builder) Build() *ItemVersion {
+	m0 := &ItemVersion{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_ItemId = b.ItemId
+	x.xxx_hidden_Version = b.Version
+	return m0
+}
+
 // SyncEvent is a single delta pushed to the client.
 type SyncEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Type  SyncEvent_EventType    `protobuf:"varint,1,opt,name=type,proto3,enum=sync.SyncEvent_EventType" json:"type,omitempty"`
-	// item is populated for UPSERT events.
-	Item *common.VaultItem `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
-	// deleted_id is populated for DELETE events.
-	DeletedId     string `protobuf:"bytes,3,opt,name=deleted_id,json=deletedId,proto3" json:"deleted_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Type      SyncEvent_EventType    `protobuf:"varint,1,opt,name=type,proto3,enum=sync.SyncEvent_EventType"`
+	xxx_hidden_Item      *common.VaultItem      `protobuf:"bytes,2,opt,name=item,proto3"`
+	xxx_hidden_DeletedId string                 `protobuf:"bytes,3,opt,name=deleted_id,json=deletedId,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *SyncEvent) Reset() {
@@ -204,30 +230,68 @@ func (x *SyncEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SyncEvent.ProtoReflect.Descriptor instead.
-func (*SyncEvent) Descriptor() ([]byte, []int) {
-	return file_sync_sync_proto_rawDescGZIP(), []int{2}
-}
-
 func (x *SyncEvent) GetType() SyncEvent_EventType {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return SyncEvent_UPSERT
 }
 
 func (x *SyncEvent) GetItem() *common.VaultItem {
 	if x != nil {
-		return x.Item
+		return x.xxx_hidden_Item
 	}
 	return nil
 }
 
 func (x *SyncEvent) GetDeletedId() string {
 	if x != nil {
-		return x.DeletedId
+		return x.xxx_hidden_DeletedId
 	}
 	return ""
+}
+
+func (x *SyncEvent) SetType(v SyncEvent_EventType) {
+	x.xxx_hidden_Type = v
+}
+
+func (x *SyncEvent) SetItem(v *common.VaultItem) {
+	x.xxx_hidden_Item = v
+}
+
+func (x *SyncEvent) SetDeletedId(v string) {
+	x.xxx_hidden_DeletedId = v
+}
+
+func (x *SyncEvent) HasItem() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Item != nil
+}
+
+func (x *SyncEvent) ClearItem() {
+	x.xxx_hidden_Item = nil
+}
+
+type SyncEvent_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Type SyncEvent_EventType
+	// item is populated for UPSERT events.
+	Item *common.VaultItem
+	// deleted_id is populated for DELETE events.
+	DeletedId string
+}
+
+func (b0 SyncEvent_builder) Build() *SyncEvent {
+	m0 := &SyncEvent{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Type = b.Type
+	x.xxx_hidden_Item = b.Item
+	x.xxx_hidden_DeletedId = b.DeletedId
+	return m0
 }
 
 var File_sync_sync_proto protoreflect.FileDescriptor
@@ -252,18 +316,6 @@ const file_sync_sync_proto_rawDesc = "" +
 	"\x06DELETE\x10\x012E\n" +
 	"\vSyncService\x126\n" +
 	"\tSubscribe\x12\x16.sync.SubscribeRequest\x1a\x0f.sync.SyncEvent0\x01B1Z/github.com/efer92/go-yandex-gophkeeper/gen/syncb\x06proto3"
-
-var (
-	file_sync_sync_proto_rawDescOnce sync.Once
-	file_sync_sync_proto_rawDescData []byte
-)
-
-func file_sync_sync_proto_rawDescGZIP() []byte {
-	file_sync_sync_proto_rawDescOnce.Do(func() {
-		file_sync_sync_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_sync_sync_proto_rawDesc), len(file_sync_sync_proto_rawDesc)))
-	})
-	return file_sync_sync_proto_rawDescData
-}
 
 var file_sync_sync_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_sync_sync_proto_msgTypes = make([]protoimpl.MessageInfo, 3)

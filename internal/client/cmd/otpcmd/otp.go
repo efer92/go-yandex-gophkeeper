@@ -51,15 +51,15 @@ func newOTPAddCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := vaultSvc.CreateItem(client.WithAuth(context.Background()), &vaultpb.CreateItemRequest{
+			resp, err := vaultSvc.CreateItem(client.WithAuth(context.Background()), vaultpb.CreateItemRequest_builder{
 				Type:     commonpb.ItemType_OTP,
 				Payload:  payload,
 				Metadata: label,
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("add otp: %w", err)
 			}
-			fmt.Printf("OTP secret added: %s\n", resp.Item.Id)
+			fmt.Printf("OTP secret added: %s\n", resp.GetItem().GetId())
 			return nil
 		},
 	}
@@ -82,16 +82,16 @@ func newOTPListCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := vaultSvc.ListItems(client.WithAuth(context.Background()), &vaultpb.ListItemsRequest{
+			resp, err := vaultSvc.ListItems(client.WithAuth(context.Background()), vaultpb.ListItemsRequest_builder{
 				TypeFilter: commonpb.ItemType_OTP,
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("list otp: %w", err)
 			}
-			for _, item := range resp.Items {
+			for _, item := range resp.GetItems() {
 				var p OTPPayload
-				_ = json.Unmarshal(item.Payload, &p)
-				fmt.Printf("%-36s  %s (%s)\n", item.Id, p.Label, p.Issuer)
+				_ = json.Unmarshal(item.GetPayload(), &p)
+				fmt.Printf("%-36s  %s (%s)\n", item.GetId(), p.Label, p.Issuer)
 			}
 			return nil
 		},
@@ -111,12 +111,12 @@ func newOTPCodeCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := vaultSvc.GetItem(client.WithAuth(context.Background()), &vaultpb.GetItemRequest{Id: args[0]})
+			resp, err := vaultSvc.GetItem(client.WithAuth(context.Background()), vaultpb.GetItemRequest_builder{Id: args[0]}.Build())
 			if err != nil {
 				return fmt.Errorf("get otp: %w", err)
 			}
 			var p OTPPayload
-			if err := json.Unmarshal(resp.Item.Payload, &p); err != nil {
+			if err := json.Unmarshal(resp.GetItem().GetPayload(), &p); err != nil {
 				return fmt.Errorf("decode otp payload: %w", err)
 			}
 			code, err := totp.GenerateCodeCustom(p.Secret, time.Now(), totp.ValidateOpts{

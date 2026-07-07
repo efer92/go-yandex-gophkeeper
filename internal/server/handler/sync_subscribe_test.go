@@ -46,7 +46,7 @@ func newSyncSetup() (*handler.SyncHandler, *handler.VaultHandler) {
 func TestSyncHandler_Subscribe_Unauthenticated(t *testing.T) {
 	h, _ := newSyncSetup()
 	stream := &fakeSubscribeStream{ctx: context.Background()}
-	err := h.Subscribe(&syncpb.SubscribeRequest{}, stream)
+	err := h.Subscribe(syncpb.SubscribeRequest_builder{}.Build(), stream)
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -56,13 +56,13 @@ func TestSyncHandler_Subscribe_SendsMissingItems(t *testing.T) {
 	userCtx := ctxWithUser("user-alice")
 
 	// Create two items for the user.
-	c1, err := vh.CreateItem(userCtx, &vaultpb.CreateItemRequest{
+	c1, err := vh.CreateItem(userCtx, vaultpb.CreateItemRequest_builder{
 		Type: commonpb.ItemType_CREDENTIAL, Payload: []byte("a"),
-	})
+	}.Build())
 	require.NoError(t, err)
-	_, err = vh.CreateItem(userCtx, &vaultpb.CreateItemRequest{
+	_, err = vh.CreateItem(userCtx, vaultpb.CreateItemRequest_builder{
 		Type: commonpb.ItemType_CREDENTIAL, Payload: []byte("b"),
-	})
+	}.Build())
 	require.NoError(t, err)
 
 	// Stream context is cancelled shortly so the live loop exits.
@@ -76,16 +76,16 @@ func TestSyncHandler_Subscribe_SendsMissingItems(t *testing.T) {
 
 	// Client already knows c1 at its current version, so only the second item
 	// should be streamed during the initial catch-up.
-	err = h.Subscribe(&syncpb.SubscribeRequest{
+	err = h.Subscribe(syncpb.SubscribeRequest_builder{
 		KnownVersions: []*syncpb.ItemVersion{
-			{ItemId: c1.Item.Id, Version: c1.Item.Version},
+			syncpb.ItemVersion_builder{ItemId: c1.GetItem().GetId(), Version: c1.GetItem().GetVersion()}.Build(),
 		},
-	}, stream)
+	}.Build(), stream)
 	require.NoError(t, err)
 
 	assert.Len(t, stream.sent, 1)
-	assert.Equal(t, syncpb.SyncEvent_UPSERT, stream.sent[0].Type)
-	assert.Equal(t, []byte("b"), stream.sent[0].Item.Payload)
+	assert.Equal(t, syncpb.SyncEvent_UPSERT, stream.sent[0].GetType())
+	assert.Equal(t, []byte("b"), stream.sent[0].GetItem().GetPayload())
 }
 
 func TestSyncHandler_Subscribe_LiveUpsert(t *testing.T) {
@@ -101,14 +101,14 @@ func TestSyncHandler_Subscribe_LiveUpsert(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- h.Subscribe(&syncpb.SubscribeRequest{}, stream)
+		done <- h.Subscribe(syncpb.SubscribeRequest_builder{}.Build(), stream)
 	}()
 
 	// Give Subscribe time to register its live subscription.
 	time.Sleep(50 * time.Millisecond)
-	_, err := vh.CreateItem(ctxWithUser("user-alice"), &vaultpb.CreateItemRequest{
+	_, err := vh.CreateItem(ctxWithUser("user-alice"), vaultpb.CreateItemRequest_builder{
 		Type: commonpb.ItemType_TEXT, Payload: []byte("live"),
-	})
+	}.Build())
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
@@ -116,5 +116,5 @@ func TestSyncHandler_Subscribe_LiveUpsert(t *testing.T) {
 	require.NoError(t, <-done)
 
 	require.NotEmpty(t, stream.sent)
-	assert.Equal(t, syncpb.SyncEvent_UPSERT, stream.sent[len(stream.sent)-1].Type)
+	assert.Equal(t, syncpb.SyncEvent_UPSERT, stream.sent[len(stream.sent)-1].GetType())
 }

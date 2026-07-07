@@ -41,7 +41,7 @@ func newSyncCmd() *cobra.Command {
 			}()
 
 			syncClient := syncpb.NewSyncServiceClient(client.Conn())
-			stream, err := syncClient.Subscribe(ctx, &syncpb.SubscribeRequest{})
+			stream, err := syncClient.Subscribe(ctx, syncpb.SubscribeRequest_builder{}.Build())
 			if err != nil {
 				return fmt.Errorf("subscribe: %w", err)
 			}
@@ -58,11 +58,11 @@ func newSyncCmd() *cobra.Command {
 					}
 					return fmt.Errorf("recv: %w", err)
 				}
-				switch evt.Type {
+				switch evt.GetType() {
 				case syncpb.SyncEvent_UPSERT:
-					fmt.Printf("[UPSERT] %s (%s)\n", evt.Item.Id, evt.Item.Metadata)
+					fmt.Printf("[UPSERT] %s (%s)\n", evt.GetItem().GetId(), evt.GetItem().GetMetadata())
 				case syncpb.SyncEvent_DELETE:
-					fmt.Printf("[DELETE] %s\n", evt.DeletedId)
+					fmt.Printf("[DELETE] %s\n", evt.GetDeletedId())
 				}
 			}
 		},

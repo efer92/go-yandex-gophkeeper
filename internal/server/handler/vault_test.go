@@ -25,30 +25,30 @@ func newVaultHandler() (*handler.VaultHandler, *testutil.MockStore) {
 }
 
 func ctxWithUser(userID string) context.Context {
-	return context.WithValue(context.Background(), middleware.ContextKeyUserID, userID)
+	return middleware.ContextWithUserID(context.Background(), userID)
 }
 
 func TestVaultHandler_CreateItem_Success(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	resp, err := h.CreateItem(ctx, &vaultpb.CreateItemRequest{
+	resp, err := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 		Type:     commonpb.ItemType_CREDENTIAL,
 		Payload:  []byte("encrypted"),
 		Metadata: "GitHub",
-	})
+	}.Build())
 	require.NoError(t, err)
-	assert.NotEmpty(t, resp.Item.Id)
-	assert.Equal(t, "GitHub", resp.Item.Metadata)
-	assert.Equal(t, commonpb.ItemType_CREDENTIAL, resp.Item.Type)
+	assert.NotEmpty(t, resp.GetItem().GetId())
+	assert.Equal(t, "GitHub", resp.GetItem().GetMetadata())
+	assert.Equal(t, commonpb.ItemType_CREDENTIAL, resp.GetItem().GetType())
 }
 
 func TestVaultHandler_CreateItem_Unauthenticated(t *testing.T) {
 	h, _ := newVaultHandler()
-	_, err := h.CreateItem(context.Background(), &vaultpb.CreateItemRequest{
+	_, err := h.CreateItem(context.Background(), vaultpb.CreateItemRequest_builder{
 		Type:    commonpb.ItemType_TEXT,
 		Payload: []byte("data"),
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -65,9 +65,9 @@ func TestVaultHandler_CreateItem_AllTypes(t *testing.T) {
 		commonpb.ItemType_OTP,
 	}
 	for _, tp := range types {
-		resp, err := h.CreateItem(ctx, &vaultpb.CreateItemRequest{Type: tp, Payload: []byte("x")})
+		resp, err := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{Type: tp, Payload: []byte("x")}.Build())
 		require.NoError(t, err, "type: %v", tp)
-		assert.Equal(t, tp, resp.Item.Type)
+		assert.Equal(t, tp, resp.GetItem().GetType())
 	}
 }
 
@@ -75,22 +75,22 @@ func TestVaultHandler_GetItem_Success(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	created, err := h.CreateItem(ctx, &vaultpb.CreateItemRequest{
+	created, err := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 		Type:    commonpb.ItemType_TEXT,
 		Payload: []byte("secret note"),
-	})
+	}.Build())
 	require.NoError(t, err)
 
-	resp, err := h.GetItem(ctx, &vaultpb.GetItemRequest{Id: created.Item.Id})
+	resp, err := h.GetItem(ctx, vaultpb.GetItemRequest_builder{Id: created.GetItem().GetId()}.Build())
 	require.NoError(t, err)
-	assert.Equal(t, created.Item.Id, resp.Item.Id)
+	assert.Equal(t, created.GetItem().GetId(), resp.GetItem().GetId())
 }
 
 func TestVaultHandler_GetItem_NotFound(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	_, err := h.GetItem(ctx, &vaultpb.GetItemRequest{Id: "nonexistent"})
+	_, err := h.GetItem(ctx, vaultpb.GetItemRequest_builder{Id: "nonexistent"}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
 }
@@ -98,11 +98,11 @@ func TestVaultHandler_GetItem_NotFound(t *testing.T) {
 func TestVaultHandler_GetItem_WrongUser(t *testing.T) {
 	h, _ := newVaultHandler()
 
-	created, _ := h.CreateItem(ctxWithUser("alice"), &vaultpb.CreateItemRequest{
+	created, _ := h.CreateItem(ctxWithUser("alice"), vaultpb.CreateItemRequest_builder{
 		Payload: []byte("alice's secret"),
-	})
+	}.Build())
 
-	_, err := h.GetItem(ctxWithUser("bob"), &vaultpb.GetItemRequest{Id: created.Item.Id})
+	_, err := h.GetItem(ctxWithUser("bob"), vaultpb.GetItemRequest_builder{Id: created.GetItem().GetId()}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
 }
@@ -111,23 +111,23 @@ func TestVaultHandler_UpdateItem_Success(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	created, _ := h.CreateItem(ctx, &vaultpb.CreateItemRequest{Payload: []byte("old")})
+	created, _ := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{Payload: []byte("old")}.Build())
 
-	resp, err := h.UpdateItem(ctx, &vaultpb.UpdateItemRequest{
-		Id:       created.Item.Id,
+	resp, err := h.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{
+		Id:       created.GetItem().GetId(),
 		Payload:  []byte("new"),
 		Metadata: "updated",
-	})
+	}.Build())
 	require.NoError(t, err)
-	assert.Equal(t, int64(2), resp.Item.Version)
-	assert.Equal(t, "updated", resp.Item.Metadata)
+	assert.Equal(t, int64(2), resp.GetItem().GetVersion())
+	assert.Equal(t, "updated", resp.GetItem().GetMetadata())
 }
 
 func TestVaultHandler_UpdateItem_NotFound(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	_, err := h.UpdateItem(ctx, &vaultpb.UpdateItemRequest{Id: "ghost", Payload: []byte("x")})
+	_, err := h.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{Id: "ghost", Payload: []byte("x")}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
 }
@@ -136,12 +136,12 @@ func TestVaultHandler_DeleteItem_Success(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	created, _ := h.CreateItem(ctx, &vaultpb.CreateItemRequest{Payload: []byte("bye")})
+	created, _ := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{Payload: []byte("bye")}.Build())
 
-	_, err := h.DeleteItem(ctx, &vaultpb.DeleteItemRequest{Id: created.Item.Id})
+	_, err := h.DeleteItem(ctx, vaultpb.DeleteItemRequest_builder{Id: created.GetItem().GetId()}.Build())
 	require.NoError(t, err)
 
-	_, err = h.GetItem(ctx, &vaultpb.GetItemRequest{Id: created.Item.Id})
+	_, err = h.GetItem(ctx, vaultpb.GetItemRequest_builder{Id: created.GetItem().GetId()}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
 }
@@ -150,7 +150,7 @@ func TestVaultHandler_DeleteItem_NotFound(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	_, err := h.DeleteItem(ctx, &vaultpb.DeleteItemRequest{Id: "ghost"})
+	_, err := h.DeleteItem(ctx, vaultpb.DeleteItemRequest_builder{Id: "ghost"}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
 }
@@ -159,9 +159,9 @@ func TestVaultHandler_ListItems_Empty(t *testing.T) {
 	h, _ := newVaultHandler()
 	ctx := ctxWithUser("user-alice")
 
-	resp, err := h.ListItems(ctx, &vaultpb.ListItemsRequest{})
+	resp, err := h.ListItems(ctx, vaultpb.ListItemsRequest_builder{}.Build())
 	require.NoError(t, err)
-	assert.Empty(t, resp.Items)
+	assert.Empty(t, resp.GetItems())
 }
 
 func TestVaultHandler_ListItems_Multiple(t *testing.T) {
@@ -169,24 +169,24 @@ func TestVaultHandler_ListItems_Multiple(t *testing.T) {
 	ctx := ctxWithUser("user-alice")
 
 	for i := 0; i < 3; i++ {
-		_, err := h.CreateItem(ctx, &vaultpb.CreateItemRequest{
+		_, err := h.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 			Type:    commonpb.ItemType_TEXT,
 			Payload: []byte("data"),
-		})
+		}.Build())
 		require.NoError(t, err)
 	}
 	// create item for another user — must not appear
-	_, err := h.CreateItem(ctxWithUser("user-bob"), &vaultpb.CreateItemRequest{Payload: []byte("bob")})
+	_, err := h.CreateItem(ctxWithUser("user-bob"), vaultpb.CreateItemRequest_builder{Payload: []byte("bob")}.Build())
 	require.NoError(t, err)
 
-	resp, err := h.ListItems(ctx, &vaultpb.ListItemsRequest{})
+	resp, err := h.ListItems(ctx, vaultpb.ListItemsRequest_builder{}.Build())
 	require.NoError(t, err)
-	assert.Len(t, resp.Items, 3)
+	assert.Len(t, resp.GetItems(), 3)
 }
 
 func TestVaultHandler_ListItems_Unauthenticated(t *testing.T) {
 	h, _ := newVaultHandler()
-	_, err := h.ListItems(context.Background(), &vaultpb.ListItemsRequest{})
+	_, err := h.ListItems(context.Background(), vaultpb.ListItemsRequest_builder{}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }

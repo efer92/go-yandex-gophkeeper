@@ -13,7 +13,6 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -78,28 +77,20 @@ func (x ItemType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ItemType.Descriptor instead.
-func (ItemType) EnumDescriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{0}
-}
-
 // VaultItem is the wire representation of a single encrypted vault entry.
 // The payload is always encrypted client-side; the server is zero-knowledge.
 type VaultItem struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Type   ItemType               `protobuf:"varint,3,opt,name=type,proto3,enum=common.ItemType" json:"type,omitempty"`
-	// payload is ChaCha20-Poly1305 encrypted JSON blob produced by the client.
-	Payload []byte `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	// metadata is plaintext free-form text (labels, tags, website).
-	Metadata  string                 `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// version is a monotonic counter for conflict detection during sync.
-	Version       int64 `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id        string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3"`
+	xxx_hidden_Type      ItemType               `protobuf:"varint,3,opt,name=type,proto3,enum=common.ItemType"`
+	xxx_hidden_Payload   []byte                 `protobuf:"bytes,4,opt,name=payload,proto3"`
+	xxx_hidden_Metadata  string                 `protobuf:"bytes,5,opt,name=metadata,proto3"`
+	xxx_hidden_CreatedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3"`
+	xxx_hidden_UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3"`
+	xxx_hidden_Version   int64                  `protobuf:"varint,8,opt,name=version,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *VaultItem) Reset() {
@@ -127,65 +118,148 @@ func (x *VaultItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VaultItem.ProtoReflect.Descriptor instead.
-func (*VaultItem) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *VaultItem) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *VaultItem) GetUserId() string {
 	if x != nil {
-		return x.UserId
+		return x.xxx_hidden_UserId
 	}
 	return ""
 }
 
 func (x *VaultItem) GetType() ItemType {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return ItemType_ITEM_TYPE_UNSPECIFIED
 }
 
 func (x *VaultItem) GetPayload() []byte {
 	if x != nil {
-		return x.Payload
+		return x.xxx_hidden_Payload
 	}
 	return nil
 }
 
 func (x *VaultItem) GetMetadata() string {
 	if x != nil {
-		return x.Metadata
+		return x.xxx_hidden_Metadata
 	}
 	return ""
 }
 
 func (x *VaultItem) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.CreatedAt
+		return x.xxx_hidden_CreatedAt
 	}
 	return nil
 }
 
 func (x *VaultItem) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.UpdatedAt
+		return x.xxx_hidden_UpdatedAt
 	}
 	return nil
 }
 
 func (x *VaultItem) GetVersion() int64 {
 	if x != nil {
-		return x.Version
+		return x.xxx_hidden_Version
 	}
 	return 0
+}
+
+func (x *VaultItem) SetId(v string) {
+	x.xxx_hidden_Id = v
+}
+
+func (x *VaultItem) SetUserId(v string) {
+	x.xxx_hidden_UserId = v
+}
+
+func (x *VaultItem) SetType(v ItemType) {
+	x.xxx_hidden_Type = v
+}
+
+func (x *VaultItem) SetPayload(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_Payload = v
+}
+
+func (x *VaultItem) SetMetadata(v string) {
+	x.xxx_hidden_Metadata = v
+}
+
+func (x *VaultItem) SetCreatedAt(v *timestamppb.Timestamp) {
+	x.xxx_hidden_CreatedAt = v
+}
+
+func (x *VaultItem) SetUpdatedAt(v *timestamppb.Timestamp) {
+	x.xxx_hidden_UpdatedAt = v
+}
+
+func (x *VaultItem) SetVersion(v int64) {
+	x.xxx_hidden_Version = v
+}
+
+func (x *VaultItem) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_CreatedAt != nil
+}
+
+func (x *VaultItem) HasUpdatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_UpdatedAt != nil
+}
+
+func (x *VaultItem) ClearCreatedAt() {
+	x.xxx_hidden_CreatedAt = nil
+}
+
+func (x *VaultItem) ClearUpdatedAt() {
+	x.xxx_hidden_UpdatedAt = nil
+}
+
+type VaultItem_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id     string
+	UserId string
+	Type   ItemType
+	// payload is ChaCha20-Poly1305 encrypted JSON blob produced by the client.
+	Payload []byte
+	// metadata is plaintext free-form text (labels, tags, website).
+	Metadata  string
+	CreatedAt *timestamppb.Timestamp
+	UpdatedAt *timestamppb.Timestamp
+	// version is a monotonic counter for conflict detection during sync.
+	Version int64
+}
+
+func (b0 VaultItem_builder) Build() *VaultItem {
+	m0 := &VaultItem{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_UserId = b.UserId
+	x.xxx_hidden_Type = b.Type
+	x.xxx_hidden_Payload = b.Payload
+	x.xxx_hidden_Metadata = b.Metadata
+	x.xxx_hidden_CreatedAt = b.CreatedAt
+	x.xxx_hidden_UpdatedAt = b.UpdatedAt
+	x.xxx_hidden_Version = b.Version
+	return m0
 }
 
 var File_common_common_proto protoreflect.FileDescriptor
@@ -213,18 +287,6 @@ const file_common_common_proto_rawDesc = "" +
 	"\x06BINARY\x10\x03\x12\b\n" +
 	"\x04CARD\x10\x04\x12\a\n" +
 	"\x03OTP\x10\x05B3Z1github.com/efer92/go-yandex-gophkeeper/gen/commonb\x06proto3"
-
-var (
-	file_common_common_proto_rawDescOnce sync.Once
-	file_common_common_proto_rawDescData []byte
-)
-
-func file_common_common_proto_rawDescGZIP() []byte {
-	file_common_common_proto_rawDescOnce.Do(func() {
-		file_common_common_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_common_common_proto_rawDesc), len(file_common_common_proto_rawDesc)))
-	})
-	return file_common_common_proto_rawDescData
-}
 
 var file_common_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_common_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)

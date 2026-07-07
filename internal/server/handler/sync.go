@@ -32,9 +32,9 @@ func (h *SyncHandler) Subscribe(req *syncpb.SubscribeRequest, stream syncpb.Sync
 	}
 
 	// Build a set of known versions from the client.
-	knownVersions := make(map[string]int64, len(req.KnownVersions))
-	for _, kv := range req.KnownVersions {
-		knownVersions[kv.ItemId] = kv.Version
+	knownVersions := make(map[string]int64, len(req.GetKnownVersions()))
+	for _, kv := range req.GetKnownVersions() {
+		knownVersions[kv.GetItemId()] = kv.GetVersion()
 	}
 
 	// Fetch all server items and send any that are newer than what the client has.
@@ -45,10 +45,11 @@ func (h *SyncHandler) Subscribe(req *syncpb.SubscribeRequest, stream syncpb.Sync
 	for _, item := range items {
 		clientVer, known := knownVersions[item.ID]
 		if !known || item.Version > clientVer {
-			if err := stream.Send(&syncpb.SyncEvent{
+			evt := syncpb.SyncEvent_builder{
 				Type: syncpb.SyncEvent_UPSERT,
 				Item: storageItemToProto(item),
-			}); err != nil {
+			}.Build()
+			if err := stream.Send(evt); err != nil {
 				return err
 			}
 		}
@@ -69,11 +70,11 @@ func (h *SyncHandler) Subscribe(req *syncpb.SubscribeRequest, stream syncpb.Sync
 			pbEvt := &syncpb.SyncEvent{}
 			switch evt.Type {
 			case "upsert":
-				pbEvt.Type = syncpb.SyncEvent_UPSERT
-				pbEvt.Item = storageItemToProto(*evt.Item)
+				pbEvt.SetType(syncpb.SyncEvent_UPSERT)
+				pbEvt.SetItem(storageItemToProto(*evt.Item))
 			case "delete":
-				pbEvt.Type = syncpb.SyncEvent_DELETE
-				pbEvt.DeletedId = evt.DeletedID
+				pbEvt.SetType(syncpb.SyncEvent_DELETE)
+				pbEvt.SetDeletedId(evt.DeletedID)
 			}
 			if err := stream.Send(pbEvt); err != nil {
 				return err
@@ -83,7 +84,7 @@ func (h *SyncHandler) Subscribe(req *syncpb.SubscribeRequest, stream syncpb.Sync
 }
 
 func storageItemToProto(item storage.VaultItem) *commonpb.VaultItem {
-	return &commonpb.VaultItem{
+	return commonpb.VaultItem_builder{
 		Id:        item.ID,
 		UserId:    item.UserID,
 		Payload:   item.Payload,
@@ -91,5 +92,5 @@ func storageItemToProto(item storage.VaultItem) *commonpb.VaultItem {
 		Version:   item.Version,
 		CreatedAt: timestamppb.New(item.CreatedAt),
 		UpdatedAt: timestamppb.New(item.UpdatedAt),
-	}
+	}.Build()
 }

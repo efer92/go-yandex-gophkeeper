@@ -6,6 +6,12 @@ plugins:
     out: gen
     opt:
       - paths=source_relative
+      - default_api_level=API_OPAQUE
+      # grpc-gateway writes URL path params directly onto request struct fields,
+      # which the Opaque API forbids; keep vault.proto Hybrid (getters/builders
+      # still required in our own code) so GetItem/UpdateItem/DeleteItem's
+      # {id} path binding keeps compiling.
+      - apilevelMvault/vault.proto=API_HYBRID
   - remote: buf.build/grpc/go
     out: gen
     opt:

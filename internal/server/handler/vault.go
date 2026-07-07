@@ -31,11 +31,11 @@ func (h *VaultHandler) CreateItem(ctx context.Context, req *vaultpb.CreateItemRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	item, err := h.vaultSvc.Create(ctx, userID, itemTypeName(req.Type), req.Payload, req.Metadata)
+	item, err := h.vaultSvc.Create(ctx, userID, itemTypeName(req.GetType()), req.GetPayload(), req.GetMetadata())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "create item failed")
 	}
-	return &vaultpb.CreateItemResponse{Item: toProtoItem(item)}, nil
+	return vaultpb.CreateItemResponse_builder{Item: toProtoItem(item)}.Build(), nil
 }
 
 // GetItem returns a single vault item by ID, scoped to the authenticated user.
@@ -44,14 +44,14 @@ func (h *VaultHandler) GetItem(ctx context.Context, req *vaultpb.GetItemRequest)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	item, err := h.vaultSvc.Get(ctx, req.Id, userID)
+	item, err := h.vaultSvc.Get(ctx, req.GetId(), userID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, "item not found")
 		}
 		return nil, status.Error(codes.Internal, "get item failed")
 	}
-	return &vaultpb.GetItemResponse{Item: toProtoItem(item)}, nil
+	return vaultpb.GetItemResponse_builder{Item: toProtoItem(item)}.Build(), nil
 }
 
 // UpdateItem replaces the payload and metadata of an existing vault item.
@@ -60,14 +60,14 @@ func (h *VaultHandler) UpdateItem(ctx context.Context, req *vaultpb.UpdateItemRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	item, err := h.vaultSvc.Update(ctx, req.Id, userID, req.Payload, req.Metadata)
+	item, err := h.vaultSvc.Update(ctx, req.GetId(), userID, req.GetPayload(), req.GetMetadata())
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, "item not found")
 		}
 		return nil, status.Error(codes.Internal, "update item failed")
 	}
-	return &vaultpb.UpdateItemResponse{Item: toProtoItem(item)}, nil
+	return vaultpb.UpdateItemResponse_builder{Item: toProtoItem(item)}.Build(), nil
 }
 
 // DeleteItem removes a vault item owned by the authenticated user.
@@ -76,13 +76,13 @@ func (h *VaultHandler) DeleteItem(ctx context.Context, req *vaultpb.DeleteItemRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	if err := h.vaultSvc.Delete(ctx, req.Id, userID); err != nil {
+	if err := h.vaultSvc.Delete(ctx, req.GetId(), userID); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, "item not found")
 		}
 		return nil, status.Error(codes.Internal, "delete item failed")
 	}
-	return &vaultpb.DeleteItemResponse{}, nil
+	return vaultpb.DeleteItemResponse_builder{}.Build(), nil
 }
 
 // ListItems returns a paginated list of vault items, optionally filtered by type.
@@ -92,9 +92,9 @@ func (h *VaultHandler) ListItems(ctx context.Context, req *vaultpb.ListItemsRequ
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
 	items, cursor, err := h.vaultSvc.List(ctx, userID, storage.ListFilter{
-		TypeFilter: itemTypeName(req.TypeFilter),
-		Limit:      int(req.Limit),
-		Cursor:     req.Cursor,
+		TypeFilter: itemTypeName(req.GetTypeFilter()),
+		Limit:      int(req.GetLimit()),
+		Cursor:     req.GetCursor(),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "list items failed")
@@ -103,11 +103,11 @@ func (h *VaultHandler) ListItems(ctx context.Context, req *vaultpb.ListItemsRequ
 	for i, item := range items {
 		pbItems[i] = toProtoItem(item)
 	}
-	return &vaultpb.ListItemsResponse{Items: pbItems, NextCursor: cursor}, nil
+	return vaultpb.ListItemsResponse_builder{Items: pbItems, NextCursor: cursor}.Build(), nil
 }
 
 func toProtoItem(item storage.VaultItem) *commonpb.VaultItem {
-	return &commonpb.VaultItem{
+	return commonpb.VaultItem_builder{
 		Id:        item.ID,
 		UserId:    item.UserID,
 		Type:      toProtoItemType(item.Type),
@@ -116,7 +116,7 @@ func toProtoItem(item storage.VaultItem) *commonpb.VaultItem {
 		Version:   item.Version,
 		CreatedAt: timestamppb.New(item.CreatedAt),
 		UpdatedAt: timestamppb.New(item.UpdatedAt),
-	}
+	}.Build()
 }
 
 func itemTypeName(t commonpb.ItemType) string {

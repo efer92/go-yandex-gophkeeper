@@ -13,7 +13,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -25,12 +24,11 @@ const (
 )
 
 type ValidateCodeRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// item_id is the vault item ID containing the encrypted TOTP seed.
-	ItemId        string `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
-	Code          string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ItemId string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3"`
+	xxx_hidden_Code   string                 `protobuf:"bytes,2,opt,name=code,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ValidateCodeRequest) Reset() {
@@ -58,30 +56,50 @@ func (x *ValidateCodeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateCodeRequest.ProtoReflect.Descriptor instead.
-func (*ValidateCodeRequest) Descriptor() ([]byte, []int) {
-	return file_otp_otp_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *ValidateCodeRequest) GetItemId() string {
 	if x != nil {
-		return x.ItemId
+		return x.xxx_hidden_ItemId
 	}
 	return ""
 }
 
 func (x *ValidateCodeRequest) GetCode() string {
 	if x != nil {
-		return x.Code
+		return x.xxx_hidden_Code
 	}
 	return ""
 }
 
+func (x *ValidateCodeRequest) SetItemId(v string) {
+	x.xxx_hidden_ItemId = v
+}
+
+func (x *ValidateCodeRequest) SetCode(v string) {
+	x.xxx_hidden_Code = v
+}
+
+type ValidateCodeRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// item_id is the vault item ID containing the encrypted TOTP seed.
+	ItemId string
+	Code   string
+}
+
+func (b0 ValidateCodeRequest_builder) Build() *ValidateCodeRequest {
+	m0 := &ValidateCodeRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_ItemId = b.ItemId
+	x.xxx_hidden_Code = b.Code
+	return m0
+}
+
 type ValidateCodeResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Valid bool                   `protobuf:"varint,1,opt,name=valid,proto3"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ValidateCodeResponse) Reset() {
@@ -109,16 +127,29 @@ func (x *ValidateCodeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateCodeResponse.ProtoReflect.Descriptor instead.
-func (*ValidateCodeResponse) Descriptor() ([]byte, []int) {
-	return file_otp_otp_proto_rawDescGZIP(), []int{1}
-}
-
 func (x *ValidateCodeResponse) GetValid() bool {
 	if x != nil {
-		return x.Valid
+		return x.xxx_hidden_Valid
 	}
 	return false
+}
+
+func (x *ValidateCodeResponse) SetValid(v bool) {
+	x.xxx_hidden_Valid = v
+}
+
+type ValidateCodeResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Valid bool
+}
+
+func (b0 ValidateCodeResponse_builder) Build() *ValidateCodeResponse {
+	m0 := &ValidateCodeResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Valid = b.Valid
+	return m0
 }
 
 var File_otp_otp_proto protoreflect.FileDescriptor
@@ -134,18 +165,6 @@ const file_otp_otp_proto_rawDesc = "" +
 	"\n" +
 	"OTPService\x12`\n" +
 	"\fValidateCode\x12\x18.otp.ValidateCodeRequest\x1a\x19.otp.ValidateCodeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/otp/validateB0Z.github.com/efer92/go-yandex-gophkeeper/gen/otpb\x06proto3"
-
-var (
-	file_otp_otp_proto_rawDescOnce sync.Once
-	file_otp_otp_proto_rawDescData []byte
-)
-
-func file_otp_otp_proto_rawDescGZIP() []byte {
-	file_otp_otp_proto_rawDescOnce.Do(func() {
-		file_otp_otp_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_otp_otp_proto_rawDesc), len(file_otp_otp_proto_rawDesc)))
-	})
-	return file_otp_otp_proto_rawDescData
-}
 
 var file_otp_otp_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_otp_otp_proto_goTypes = []any{

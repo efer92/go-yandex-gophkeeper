@@ -28,20 +28,21 @@ func newAuthHandler() (*handler.AuthHandler, *testutil.MockStore) {
 
 func registerUser(t *testing.T, h *handler.AuthHandler, username, password string) *authpb.RegisterResponse {
 	t.Helper()
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	masterKey := crypto.DeriveKey([]byte(password), kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 	vaultKey, _ := crypto.GenerateVaultSymKey()
 	sealedKey, _ := crypto.SealVaultSymKey(vaultKey, encKey)
 	kdfJSON, _ := crypto.MarshalKDFParams(kdfParams)
 
-	resp, err := h.Register(context.Background(), &authpb.RegisterRequest{
+	resp, err := h.Register(context.Background(), authpb.RegisterRequest_builder{
 		Username:      username,
 		Email:         username + "@example.com",
 		Password:      password,
 		VaultSymKey:   sealedKey,
 		KdfParamsJson: kdfJSON,
-	})
+	}.Build())
 	require.NoError(t, err)
 	return resp
 }
@@ -49,17 +50,17 @@ func registerUser(t *testing.T, h *handler.AuthHandler, username, password strin
 func TestAuthHandler_Register_Success(t *testing.T) {
 	h, _ := newAuthHandler()
 	resp := registerUser(t, h, "alice", "secret123")
-	assert.NotEmpty(t, resp.UserId)
+	assert.NotEmpty(t, resp.GetUserId())
 }
 
 func TestAuthHandler_Register_DuplicateUser(t *testing.T) {
 	h, _ := newAuthHandler()
 	registerUser(t, h, "alice", "secret123")
 
-	_, err := h.Register(context.Background(), &authpb.RegisterRequest{
+	_, err := h.Register(context.Background(), authpb.RegisterRequest_builder{
 		Username: "alice", Email: "other@example.com",
 		Password: "other", VaultSymKey: []byte("k"), KdfParamsJson: "{}",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.AlreadyExists, st.Code())
 }
@@ -68,30 +69,30 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 	h, _ := newAuthHandler()
 	registerUser(t, h, "alice", "secret123")
 
-	resp, err := h.Login(context.Background(), &authpb.LoginRequest{
+	resp, err := h.Login(context.Background(), authpb.LoginRequest_builder{
 		Username: "alice", Password: "secret123",
-	})
+	}.Build())
 	require.NoError(t, err)
-	assert.NotEmpty(t, resp.AccessToken)
-	assert.NotEmpty(t, resp.RefreshToken)
+	assert.NotEmpty(t, resp.GetAccessToken())
+	assert.NotEmpty(t, resp.GetRefreshToken())
 }
 
 func TestAuthHandler_Login_WrongPassword(t *testing.T) {
 	h, _ := newAuthHandler()
 	registerUser(t, h, "alice", "secret123")
 
-	_, err := h.Login(context.Background(), &authpb.LoginRequest{
+	_, err := h.Login(context.Background(), authpb.LoginRequest_builder{
 		Username: "alice", Password: "wrong",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
 
 func TestAuthHandler_Login_UnknownUser(t *testing.T) {
 	h, _ := newAuthHandler()
-	_, err := h.Login(context.Background(), &authpb.LoginRequest{
+	_, err := h.Login(context.Background(), authpb.LoginRequest_builder{
 		Username: "ghost", Password: "pass",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -100,49 +101,49 @@ func TestAuthHandler_Refresh_Valid(t *testing.T) {
 	h, _ := newAuthHandler()
 	registerUser(t, h, "alice", "secret123")
 
-	loginResp, _ := h.Login(context.Background(), &authpb.LoginRequest{
+	loginResp, _ := h.Login(context.Background(), authpb.LoginRequest_builder{
 		Username: "alice", Password: "secret123",
-	})
+	}.Build())
 
-	resp, err := h.Refresh(context.Background(), &authpb.RefreshRequest{
-		RefreshToken: loginResp.RefreshToken,
-	})
+	resp, err := h.Refresh(context.Background(), authpb.RefreshRequest_builder{
+		RefreshToken: loginResp.GetRefreshToken(),
+	}.Build())
 	require.NoError(t, err)
-	assert.NotEmpty(t, resp.AccessToken)
+	assert.NotEmpty(t, resp.GetAccessToken())
 }
 
 func TestAuthHandler_Refresh_Invalid(t *testing.T) {
 	h, _ := newAuthHandler()
-	_, err := h.Refresh(context.Background(), &authpb.RefreshRequest{
+	_, err := h.Refresh(context.Background(), authpb.RefreshRequest_builder{
 		RefreshToken: "bad-token",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
 
 func TestAuthHandler_Logout_Success(t *testing.T) {
 	h, _ := newAuthHandler()
-	registerUser(t, h, "alice", "secret123")
+	regResp := registerUser(t, h, "alice", "secret123")
 
-	loginResp, _ := h.Login(context.Background(), &authpb.LoginRequest{
+	loginResp, _ := h.Login(context.Background(), authpb.LoginRequest_builder{
 		Username: "alice", Password: "secret123",
-	})
+	}.Build())
 
-	_, err := h.Logout(context.Background(), &authpb.LogoutRequest{
-		RefreshToken: loginResp.RefreshToken,
-	})
+	_, err := h.Logout(ctxWithUser(regResp.GetUserId()), authpb.LogoutRequest_builder{
+		RefreshToken: loginResp.GetRefreshToken(),
+	}.Build())
 	require.NoError(t, err)
 
 	// Refresh after logout must fail
-	_, err = h.Refresh(context.Background(), &authpb.RefreshRequest{
-		RefreshToken: loginResp.RefreshToken,
-	})
+	_, err = h.Refresh(context.Background(), authpb.RefreshRequest_builder{
+		RefreshToken: loginResp.GetRefreshToken(),
+	}.Build())
 	assert.Error(t, err)
 }
 
 func TestAuthHandler_EnrollTOTP_RequiresAuth(t *testing.T) {
 	h, _ := newAuthHandler()
-	_, err := h.EnrollTOTP(context.Background(), &authpb.EnrollTOTPRequest{Label: "test"})
+	_, err := h.EnrollTOTP(context.Background(), authpb.EnrollTOTPRequest_builder{Label: "test"}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -152,27 +153,27 @@ func TestAuthHandler_EnrollTOTP_Success(t *testing.T) {
 	registerUser(t, h, "alice", "secret123")
 
 	ctx := ctxWithUser("user-alice")
-	resp, err := h.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{Label: "alice@GophKeeper"})
+	resp, err := h.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{Label: "alice@GophKeeper"}.Build())
 	require.NoError(t, err)
-	assert.NotEmpty(t, resp.TotpId)
-	assert.NotEmpty(t, resp.Secret)
-	assert.NotEmpty(t, resp.OtpauthUrl)
+	assert.NotEmpty(t, resp.GetTotpId())
+	assert.NotEmpty(t, resp.GetSecret())
+	assert.NotEmpty(t, resp.GetOtpauthUrl())
 }
 
 func TestAuthHandler_ConfirmTOTP_RequiresAuth(t *testing.T) {
 	h, _ := newAuthHandler()
-	_, err := h.ConfirmTOTP(context.Background(), &authpb.ConfirmTOTPRequest{
+	_, err := h.ConfirmTOTP(context.Background(), authpb.ConfirmTOTPRequest_builder{
 		TotpId: "tid", Code: "123456",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
 
 func TestAuthHandler_VerifyMFA_RequiresAuth(t *testing.T) {
 	h, _ := newAuthHandler()
-	_, err := h.VerifyMFA(context.Background(), &authpb.VerifyMFARequest{
+	_, err := h.VerifyMFA(context.Background(), authpb.VerifyMFARequest_builder{
 		SessionId: "sid", TotpCode: "123456",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -180,42 +181,42 @@ func TestAuthHandler_VerifyMFA_RequiresAuth(t *testing.T) {
 func TestAuthHandler_ConfirmTOTP_InvalidCode(t *testing.T) {
 	h, _ := newAuthHandler()
 	ctx := ctxWithUser("user-alice")
-	enroll, err := h.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{Label: "alice"})
+	enroll, err := h.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{Label: "alice"}.Build())
 	require.NoError(t, err)
 
-	resp, err := h.ConfirmTOTP(ctx, &authpb.ConfirmTOTPRequest{
-		TotpId: enroll.TotpId, Code: "000000",
-	})
+	resp, err := h.ConfirmTOTP(ctx, authpb.ConfirmTOTPRequest_builder{
+		TotpId: enroll.GetTotpId(), Code: "000000",
+	}.Build())
 	require.NoError(t, err)
-	assert.False(t, resp.Ok)
+	assert.False(t, resp.GetOk())
 }
 
 func TestAuthHandler_ConfirmTOTP_Success(t *testing.T) {
 	h, _ := newAuthHandler()
 	ctx := ctxWithUser("user-alice")
-	enroll, err := h.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{Label: "alice"})
+	enroll, err := h.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{Label: "alice"}.Build())
 	require.NoError(t, err)
 
-	code, err := totp.GenerateCode(enroll.Secret, time.Now())
+	code, err := totp.GenerateCode(enroll.GetSecret(), time.Now())
 	require.NoError(t, err)
 
-	resp, err := h.ConfirmTOTP(ctx, &authpb.ConfirmTOTPRequest{
-		TotpId: enroll.TotpId, Code: code,
-	})
+	resp, err := h.ConfirmTOTP(ctx, authpb.ConfirmTOTPRequest_builder{
+		TotpId: enroll.GetTotpId(), Code: code,
+	}.Build())
 	require.NoError(t, err)
-	assert.True(t, resp.Ok)
+	assert.True(t, resp.GetOk())
 }
 
 func TestAuthHandler_VerifyMFA_InvalidCode(t *testing.T) {
 	h, _ := newAuthHandler()
 	ctx := ctxWithUser("user-alice")
-	enroll, _ := h.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{Label: "alice"})
-	code, _ := totp.GenerateCode(enroll.Secret, time.Now())
-	_, _ = h.ConfirmTOTP(ctx, &authpb.ConfirmTOTPRequest{TotpId: enroll.TotpId, Code: code})
+	enroll, _ := h.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{Label: "alice"}.Build())
+	code, _ := totp.GenerateCode(enroll.GetSecret(), time.Now())
+	_, _ = h.ConfirmTOTP(ctx, authpb.ConfirmTOTPRequest_builder{TotpId: enroll.GetTotpId(), Code: code}.Build())
 
-	_, err := h.VerifyMFA(ctx, &authpb.VerifyMFARequest{
+	_, err := h.VerifyMFA(ctx, authpb.VerifyMFARequest_builder{
 		SessionId: "sid", TotpCode: "000000",
-	})
+	}.Build())
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
 }
@@ -223,17 +224,17 @@ func TestAuthHandler_VerifyMFA_InvalidCode(t *testing.T) {
 func TestAuthHandler_VerifyMFA_Success(t *testing.T) {
 	h, _ := newAuthHandler()
 	ctx := ctxWithUser("user-alice")
-	enroll, _ := h.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{Label: "alice"})
-	code, _ := totp.GenerateCode(enroll.Secret, time.Now())
-	confirm, err := h.ConfirmTOTP(ctx, &authpb.ConfirmTOTPRequest{TotpId: enroll.TotpId, Code: code})
+	enroll, _ := h.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{Label: "alice"}.Build())
+	code, _ := totp.GenerateCode(enroll.GetSecret(), time.Now())
+	confirm, err := h.ConfirmTOTP(ctx, authpb.ConfirmTOTPRequest_builder{TotpId: enroll.GetTotpId(), Code: code}.Build())
 	require.NoError(t, err)
-	require.True(t, confirm.Ok)
+	require.True(t, confirm.GetOk())
 
-	verifyCode, _ := totp.GenerateCode(enroll.Secret, time.Now())
-	resp, err := h.VerifyMFA(ctx, &authpb.VerifyMFARequest{
+	verifyCode, _ := totp.GenerateCode(enroll.GetSecret(), time.Now())
+	resp, err := h.VerifyMFA(ctx, authpb.VerifyMFARequest_builder{
 		SessionId: "sid", TotpCode: verifyCode,
-	})
+	}.Build())
 	require.NoError(t, err)
-	assert.NotEmpty(t, resp.AccessToken)
-	assert.NotEmpty(t, resp.RefreshToken)
+	assert.NotEmpty(t, resp.GetAccessToken())
+	assert.NotEmpty(t, resp.GetRefreshToken())
 }

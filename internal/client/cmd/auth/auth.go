@@ -43,7 +43,10 @@ func newRegisterCmd() *cobra.Command {
 				return fmt.Errorf("passwords do not match")
 			}
 
-			kdfParams := crypto.DefaultKDFParams()
+			kdfParams, err := crypto.DefaultKDFParams()
+			if err != nil {
+				return fmt.Errorf("generate kdf params: %w", err)
+			}
 			masterKey := crypto.DeriveKey(password, kdfParams)
 			encKey, _ := crypto.StretchKey(masterKey)
 			vaultKey, err := crypto.GenerateVaultSymKey()
@@ -69,17 +72,17 @@ func newRegisterCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := client.AuthSvc.Register(context.Background(), &authpb.RegisterRequest{
+			resp, err := client.AuthSvc.Register(context.Background(), authpb.RegisterRequest_builder{
 				Username:      username,
 				Email:         email,
 				Password:      string(password),
 				VaultSymKey:   sealedKey,
 				KdfParamsJson: kdfJSON,
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("register: %w", err)
 			}
-			fmt.Printf("Registered successfully. User ID: %s\n", resp.UserId)
+			fmt.Printf("Registered successfully. User ID: %s\n", resp.GetUserId())
 			return nil
 		},
 	}
@@ -111,30 +114,30 @@ func newLoginCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := client.AuthSvc.Login(context.Background(), &authpb.LoginRequest{
+			resp, err := client.AuthSvc.Login(context.Background(), authpb.LoginRequest_builder{
 				Username: username,
 				Password: string(password),
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("login: %w", err)
 			}
 
-			if resp.NeedsMfa {
+			if resp.GetNeedsMfa() {
 				var code string
 				fmt.Print("MFA code: ")
 				fmt.Scanln(&code) //nolint:errcheck
-				mfaResp, err := client.AuthSvc.VerifyMFA(context.Background(), &authpb.VerifyMFARequest{
-					SessionId: resp.SessionId,
+				mfaResp, err := client.AuthSvc.VerifyMFA(context.Background(), authpb.VerifyMFARequest_builder{
+					SessionId: resp.GetSessionId(),
 					TotpCode:  code,
-				})
+				}.Build())
 				if err != nil {
 					return fmt.Errorf("mfa verify: %w", err)
 				}
-				cfg.AccessToken = mfaResp.AccessToken
-				cfg.RefreshToken = mfaResp.RefreshToken
+				cfg.AccessToken = mfaResp.GetAccessToken()
+				cfg.RefreshToken = mfaResp.GetRefreshToken()
 			} else {
-				cfg.AccessToken = resp.AccessToken
-				cfg.RefreshToken = resp.RefreshToken
+				cfg.AccessToken = resp.GetAccessToken()
+				cfg.RefreshToken = resp.GetRefreshToken()
 			}
 
 			cfg.Username = username
@@ -142,7 +145,7 @@ func newLoginCmd() *cobra.Command {
 				return fmt.Errorf("save config: %w", err)
 			}
 			fmt.Printf("Logged in as %s\n", username)
-			if resp.NeedsMfa {
+			if resp.GetNeedsMfa() {
 				fmt.Println("MFA verified.")
 			}
 			return nil
@@ -174,25 +177,25 @@ func newMFACmd() *cobra.Command {
 			defer client.Close()
 
 			ctx := client.WithAuth(context.Background())
-			resp, err := client.AuthSvc.EnrollTOTP(ctx, &authpb.EnrollTOTPRequest{
+			resp, err := client.AuthSvc.EnrollTOTP(ctx, authpb.EnrollTOTPRequest_builder{
 				Label: cfg.Username + "@GophKeeper",
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("enroll totp: %w", err)
 			}
 
-			fmt.Printf("\nScan this URL in your authenticator app:\n%s\n\n", resp.OtpauthUrl)
-			fmt.Printf("Or enter manually: %s\n\n", resp.Secret)
+			fmt.Printf("\nScan this URL in your authenticator app:\n%s\n\n", resp.GetOtpauthUrl())
+			fmt.Printf("Or enter manually: %s\n\n", resp.GetSecret())
 
 			var code string
 			fmt.Print("Enter the 6-digit code to confirm: ")
 			fmt.Scanln(&code) //nolint:errcheck
 
-			confirm, err := client.AuthSvc.ConfirmTOTP(ctx, &authpb.ConfirmTOTPRequest{
-				TotpId: resp.TotpId,
+			confirm, err := client.AuthSvc.ConfirmTOTP(ctx, authpb.ConfirmTOTPRequest_builder{
+				TotpId: resp.GetTotpId(),
 				Code:   code,
-			})
-			if err != nil || !confirm.Ok {
+			}.Build())
+			if err != nil || !confirm.GetOk() {
 				return fmt.Errorf("TOTP confirmation failed — wrong code?")
 			}
 			fmt.Println("TOTP MFA enabled successfully.")

@@ -57,15 +57,15 @@ func newAddCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := vaultSvc.CreateItem(client.WithAuth(context.Background()), &vaultpb.CreateItemRequest{
+			resp, err := vaultSvc.CreateItem(client.WithAuth(context.Background()), vaultpb.CreateItemRequest_builder{
 				Type:     commonpb.ItemType_CREDENTIAL,
 				Payload:  payload,
 				Metadata: name,
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("add credential: %w", err)
 			}
-			fmt.Printf("Created: %s\n", resp.Item.Id)
+			fmt.Printf("Created: %s\n", resp.GetItem().GetId())
 			return nil
 		},
 	}
@@ -100,7 +100,7 @@ func newGetCmd() *cobra.Command {
 				return err
 			}
 
-			p := parsePayload(item.Payload, item.Metadata)
+			p := parsePayload(item.GetPayload(), item.GetMetadata())
 
 			// --field: print a single value, no label
 			if field != "" {
@@ -110,7 +110,7 @@ func newGetCmd() *cobra.Command {
 					"password": p.Password, "pass": p.Password, "pwd": p.Password,
 					"url":   p.URL,
 					"notes": p.Notes,
-					"id":    item.Id,
+					"id":    item.GetId(),
 				}
 				v, ok := fields[strings.ToLower(field)]
 				if !ok {
@@ -123,7 +123,7 @@ func newGetCmd() *cobra.Command {
 			// --json: machine-readable output
 			if asJSON {
 				out := map[string]string{
-					"id":       item.Id,
+					"id":       item.GetId(),
 					"name":     p.Name,
 					"username": p.Username,
 					"password": p.Password,
@@ -144,7 +144,7 @@ func newGetCmd() *cobra.Command {
 			if p.Notes != "" {
 				fmt.Printf("Notes:    %s\n", p.Notes)
 			}
-			fmt.Printf("ID:       %s\n", item.Id)
+			fmt.Printf("ID:       %s\n", item.GetId())
 
 			if copyPwd {
 				if err := clipboard.WriteAll(p.Password); err != nil {
@@ -172,22 +172,22 @@ func newListCmd() *cobra.Command {
 			}
 			defer client.Close()
 
-			resp, err := vaultSvc.ListItems(client.WithAuth(context.Background()), &vaultpb.ListItemsRequest{
+			resp, err := vaultSvc.ListItems(client.WithAuth(context.Background()), vaultpb.ListItemsRequest_builder{
 				TypeFilter: commonpb.ItemType_CREDENTIAL,
-			})
+			}.Build())
 			if err != nil {
 				return fmt.Errorf("list credentials: %w", err)
 			}
 
-			if len(resp.Items) == 0 {
+			if len(resp.GetItems()) == 0 {
 				fmt.Println("No credentials found.")
 				return nil
 			}
 
 			fmt.Printf("%-30s  %-30s  %s\n", "Name", "Username", "URL")
 			fmt.Println(strings.Repeat("-", 75))
-			for _, item := range resp.Items {
-				p := parsePayload(item.Payload, item.Metadata)
+			for _, item := range resp.GetItems() {
+				p := parsePayload(item.GetPayload(), item.GetMetadata())
 				fmt.Printf("%-30s  %-30s  %s\n", p.Name, p.Username, p.URL)
 			}
 			return nil
@@ -213,11 +213,11 @@ func newDeleteCmd() *cobra.Command {
 				return err
 			}
 
-			_, err = vaultSvc.DeleteItem(ctx, &vaultpb.DeleteItemRequest{Id: item.Id})
+			_, err = vaultSvc.DeleteItem(ctx, vaultpb.DeleteItemRequest_builder{Id: item.GetId()}.Build())
 			if err != nil {
 				return fmt.Errorf("delete credential: %w", err)
 			}
-			fmt.Printf("Deleted: %s\n", item.Metadata)
+			fmt.Printf("Deleted: %s\n", item.GetMetadata())
 			return nil
 		},
 	}
@@ -247,22 +247,22 @@ func looksLikeUUID(s string) bool {
 // findCredential resolves a credential by UUID or by name (case-insensitive substring).
 func findCredential(ctx context.Context, svc vaultpb.VaultServiceClient, query string) (*commonpb.VaultItem, error) {
 	if looksLikeUUID(query) {
-		resp, err := svc.GetItem(ctx, &vaultpb.GetItemRequest{Id: query})
+		resp, err := svc.GetItem(ctx, vaultpb.GetItemRequest_builder{Id: query}.Build())
 		if err != nil {
 			return nil, fmt.Errorf("get credential: %w", err)
 		}
-		return resp.Item, nil
+		return resp.GetItem(), nil
 	}
 
-	list, lerr := svc.ListItems(ctx, &vaultpb.ListItemsRequest{TypeFilter: commonpb.ItemType_CREDENTIAL})
+	list, lerr := svc.ListItems(ctx, vaultpb.ListItemsRequest_builder{TypeFilter: commonpb.ItemType_CREDENTIAL}.Build())
 	if lerr != nil {
 		return nil, fmt.Errorf("list credentials: %w", lerr)
 	}
 
 	queryLow := strings.ToLower(query)
 	var matches []*commonpb.VaultItem
-	for _, it := range list.Items {
-		if strings.Contains(strings.ToLower(it.Metadata), queryLow) {
+	for _, it := range list.GetItems() {
+		if strings.Contains(strings.ToLower(it.GetMetadata()), queryLow) {
 			matches = append(matches, it)
 		}
 	}
@@ -274,7 +274,7 @@ func findCredential(ctx context.Context, svc vaultpb.VaultServiceClient, query s
 	default:
 		fmt.Printf("Multiple matches for %q:\n", query)
 		for _, m := range matches {
-			fmt.Printf("  %s  %s\n", m.Id, m.Metadata)
+			fmt.Printf("  %s  %s\n", m.GetId(), m.GetMetadata())
 		}
 		return nil, fmt.Errorf("refine your query to match exactly one credential")
 	}

@@ -534,7 +534,7 @@ func (m *Model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.listIdx = 0
 	case "o":
 		if len(items) > 0 && m.listIdx < len(items) {
-			p := parseLoginPayload(items[m.listIdx].Payload, "")
+			p := parseLoginPayload(items[m.listIdx].GetPayload(), "")
 			if p.URL != "" {
 				openURL(p.URL)
 			}
@@ -605,7 +605,7 @@ func (m *Model) handleDelConfKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}()
 			ctx, cancel := m.grpcCtx()
 			defer cancel()
-			_, err := m.vaultSvc.DeleteItem(ctx, &vaultpb.DeleteItemRequest{Id: target.Id})
+			_, err := m.vaultSvc.DeleteItem(ctx, vaultpb.DeleteItemRequest_builder{Id: target.GetId()}.Build())
 			if err != nil {
 				return errMsg(err)
 			}
@@ -711,7 +711,7 @@ func (m *Model) openNewForm(typ commonpb.ItemType) {
 }
 
 func (m *Model) openEditForm(item *commonpb.VaultItem) {
-	m.form = m.buildForm(item.Type, item.Id, item, "")
+	m.form = m.buildForm(item.GetType(), item.GetId(), item, "")
 	m.form.fields[0].input.Focus()
 	m.mode = modeForm
 	m.lastErr = ""
@@ -739,11 +739,11 @@ func (m *Model) openNewSSHForm() {
 
 func (m *Model) openEditSSHForm(item *commonpb.VaultItem) {
 	const w = 44
-	p := parseSSHKeyPayload(item.Payload, item.Metadata)
+	p := parseSSHKeyPayload(item.GetPayload(), item.GetMetadata())
 	folder := getItemFolder(item)
 	m.form = &itemForm{
 		typ:        commonpb.ItemType_TEXT,
-		editItemID: item.Id,
+		editItemID: item.GetId(),
 		title:      "SSH Key",
 		fields: []formField{
 			{label: "Name *", input: mkInput("id_ed25519", p.Name, w)},
@@ -794,7 +794,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 	const w = 44
 	meta := ""
 	if item != nil {
-		meta = item.Metadata
+		meta = item.GetMetadata()
 	}
 
 	// Текущая папка элемента (для редактирования) или предзаполненная (для создания)
@@ -822,7 +822,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 		title = "Login"
 		p := LoginPayload{}
 		if item != nil {
-			p = parseLoginPayload(item.Payload, meta)
+			p = parseLoginPayload(item.GetPayload(), meta)
 		}
 		fields = []formField{
 			{label: "Name *", input: mkInput("github.com", p.Name, w)},
@@ -838,7 +838,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 		title = "Card"
 		p := CardPayload{}
 		if item != nil {
-			p = parseCardPayload(item.Payload, meta)
+			p = parseCardPayload(item.GetPayload(), meta)
 		}
 		fields = []formField{
 			{label: "Name *", input: mkInput("Visa Gold", p.Name, w)},
@@ -855,7 +855,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 		title = "Note"
 		p := NotePayload{}
 		if item != nil {
-			p = parseNotePayload(item.Payload, meta)
+			p = parseNotePayload(item.GetPayload(), meta)
 		}
 		fields = []formField{
 			{label: "Name *", input: mkInput("API Keys", p.Name, w)},
@@ -867,7 +867,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 		title = "Identity"
 		p := IdentityPayload{}
 		if item != nil {
-			p = parseIdentityPayload(item.Payload, meta)
+			p = parseIdentityPayload(item.GetPayload(), meta)
 		}
 		fields = []formField{
 			{label: "Name *", input: mkInput("My Profile", p.Name, w)},
@@ -885,7 +885,7 @@ func (m *Model) buildForm(typ commonpb.ItemType, editID string, item *commonpb.V
 		title = "Authenticator"
 		p := AuthPayload{}
 		if item != nil {
-			p = parseAuthPayload(item.Payload, meta)
+			p = parseAuthPayload(item.GetPayload(), meta)
 		}
 		fields = []formField{
 			{label: "Name *", input: mkInput("GitHub 2FA", p.Name, w)},
@@ -957,17 +957,17 @@ func (m *Model) saveForm() tea.Cmd {
 			ctx, cancel := m.grpcCtx()
 			defer cancel()
 			if form.editItemID == "" {
-				_, err = m.vaultSvc.CreateItem(ctx, &vaultpb.CreateItemRequest{
+				_, err = m.vaultSvc.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 					Type:     form.typ,
 					Payload:  payload,
 					Metadata: meta,
-				})
+				}.Build())
 			} else {
-				_, err = m.vaultSvc.UpdateItem(ctx, &vaultpb.UpdateItemRequest{
+				_, err = m.vaultSvc.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{
 					Id:       form.editItemID,
 					Payload:  payload,
 					Metadata: meta,
-				})
+				}.Build())
 			}
 			if err != nil {
 				return errMsg(err)
@@ -1000,17 +1000,17 @@ func (m *Model) saveForm() tea.Cmd {
 			defer cancel()
 			var err error
 			if form.editItemID == "" {
-				_, err = m.vaultSvc.CreateItem(ctx, &vaultpb.CreateItemRequest{
+				_, err = m.vaultSvc.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 					Type:     form.typ,
 					Payload:  payload,
 					Metadata: meta,
-				})
+				}.Build())
 			} else {
-				_, err = m.vaultSvc.UpdateItem(ctx, &vaultpb.UpdateItemRequest{
+				_, err = m.vaultSvc.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{
 					Id:       form.editItemID,
 					Payload:  payload,
 					Metadata: meta,
-				})
+				}.Build())
 			}
 			if err != nil {
 				return errMsg(err)
@@ -1025,8 +1025,8 @@ func (m *Model) saveForm() tea.Cmd {
 			if form.editItemID != "" {
 				// Carry over existing history; prepend old password if it changed.
 				for _, it := range m.items {
-					if it.Id == form.editItemID {
-						old := parseLoginPayload(it.Payload, it.Metadata)
+					if it.GetId() == form.editItemID {
+						old := parseLoginPayload(it.GetPayload(), it.GetMetadata())
 						history = old.History
 						if old.Password != "" && old.Password != newPwd {
 							entry := PasswordHistoryEntry{Password: old.Password, LastUsed: time.Now()}
@@ -1090,17 +1090,17 @@ func (m *Model) saveForm() tea.Cmd {
 		defer cancel()
 		var err error
 		if form.editItemID == "" {
-			_, err = m.vaultSvc.CreateItem(ctx, &vaultpb.CreateItemRequest{
+			_, err = m.vaultSvc.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
 				Type:     form.typ,
 				Payload:  payload,
 				Metadata: meta,
-			})
+			}.Build())
 		} else {
-			_, err = m.vaultSvc.UpdateItem(ctx, &vaultpb.UpdateItemRequest{
+			_, err = m.vaultSvc.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{
 				Id:       form.editItemID,
 				Payload:  payload,
 				Metadata: meta,
-			})
+			}.Build())
 		}
 		if err != nil {
 			return errMsg(err)
@@ -1161,7 +1161,7 @@ func (m *Model) filteredItems() []*commonpb.VaultItem {
 			}
 		} else {
 			for _, t := range cat.types {
-				if item.Type == t {
+				if item.GetType() == t {
 					// Exclude file attachments from Identity filter
 					if t == commonpb.ItemType_BINARY && isFileItem(item) {
 						break
@@ -1176,7 +1176,7 @@ func (m *Model) filteredItems() []*commonpb.VaultItem {
 		q := strings.ToLower(m.searchQuery)
 		var filtered []*commonpb.VaultItem
 		for _, item := range base {
-			if strings.Contains(strings.ToLower(item.Metadata), q) {
+			if strings.Contains(strings.ToLower(item.GetMetadata()), q) {
 				filtered = append(filtered, item)
 			}
 		}
@@ -1188,7 +1188,7 @@ func (m *Model) filteredItems() []*commonpb.VaultItem {
 	case sortName:
 		for i := 0; i < len(base); i++ {
 			for j := i + 1; j < len(base); j++ {
-				if strings.ToLower(base[j].Metadata) < strings.ToLower(base[i].Metadata) {
+				if strings.ToLower(base[j].GetMetadata()) < strings.ToLower(base[i].GetMetadata()) {
 					base[i], base[j] = base[j], base[i]
 				}
 			}
@@ -1196,8 +1196,8 @@ func (m *Model) filteredItems() []*commonpb.VaultItem {
 	case sortTypeName:
 		for i := 0; i < len(base); i++ {
 			for j := i + 1; j < len(base); j++ {
-				ti, tj := int(base[i].Type), int(base[j].Type)
-				if tj < ti || (tj == ti && strings.ToLower(base[j].Metadata) < strings.ToLower(base[i].Metadata)) {
+				ti, tj := int(base[i].GetType()), int(base[j].GetType())
+				if tj < ti || (tj == ti && strings.ToLower(base[j].GetMetadata()) < strings.ToLower(base[i].GetMetadata())) {
 					base[i], base[j] = base[j], base[i]
 				}
 			}
@@ -1210,7 +1210,7 @@ func getItemFolder(item *commonpb.VaultItem) string {
 	var f struct {
 		Folder string `json:"folder"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.Folder
 }
 
@@ -1218,7 +1218,7 @@ func isFavorite(item *commonpb.VaultItem) bool {
 	var f struct {
 		Favorite bool `json:"favorite"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.Favorite
 }
 
@@ -1226,7 +1226,7 @@ func isArchived(item *commonpb.VaultItem) bool {
 	var f struct {
 		Archived bool `json:"archived"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.Archived
 }
 
@@ -1234,29 +1234,29 @@ func isTrashed(item *commonpb.VaultItem) bool {
 	var f struct {
 		Trashed bool `json:"trashed"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.Trashed
 }
 
 func isSSHKey(item *commonpb.VaultItem) bool {
-	if item.Type != commonpb.ItemType_TEXT {
+	if item.GetType() != commonpb.ItemType_TEXT {
 		return false
 	}
 	var f struct {
 		SSHKey bool `json:"ssh_key"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.SSHKey
 }
 
 func isFileItem(item *commonpb.VaultItem) bool {
-	if item.Type != commonpb.ItemType_BINARY {
+	if item.GetType() != commonpb.ItemType_BINARY {
 		return false
 	}
 	var f struct {
 		IsFile bool `json:"is_file"`
 	}
-	_ = json.Unmarshal(item.Payload, &f)
+	_ = json.Unmarshal(item.GetPayload(), &f)
 	return f.IsFile
 }
 
@@ -1269,7 +1269,7 @@ func (m *Model) setItemFlag(item *commonpb.VaultItem, flag string, value bool) t
 			}
 		}()
 		var data map[string]interface{}
-		if err := json.Unmarshal(item.Payload, &data); err != nil {
+		if err := json.Unmarshal(item.GetPayload(), &data); err != nil {
 			data = make(map[string]interface{})
 		}
 		if value {
@@ -1283,11 +1283,11 @@ func (m *Model) setItemFlag(item *commonpb.VaultItem, flag string, value bool) t
 		}
 		ctx, cancel := m.grpcCtx()
 		defer cancel()
-		_, err = m.vaultSvc.UpdateItem(ctx, &vaultpb.UpdateItemRequest{
-			Id:       item.Id,
+		_, err = m.vaultSvc.UpdateItem(ctx, vaultpb.UpdateItemRequest_builder{
+			Id:       item.GetId(),
 			Payload:  newPayload,
-			Metadata: item.Metadata,
-		})
+			Metadata: item.GetMetadata(),
+		}.Build())
 		if err != nil {
 			return errMsg(err)
 		}
@@ -1329,16 +1329,16 @@ func (m *Model) loadItems() tea.Cmd {
 		}()
 		ctx, cancel := context.WithTimeout(grpcClient.WithAuth(context.Background()), 5*time.Second)
 		defer cancel()
-		resp, err := vaultSvc.ListItems(ctx, &vaultpb.ListItemsRequest{Limit: 1000})
+		resp, err := vaultSvc.ListItems(ctx, vaultpb.ListItemsRequest_builder{Limit: 1000}.Build())
 		if err != nil {
 			return tryLoadCache(cfg)
 		}
 		// Online: persist to local cache for offline use.
 		if cfg.RefreshToken != "" && cfg.VaultPath != "" {
 			key := localvault.CacheKey(cfg.RefreshToken)
-			_ = localvault.Save(cfg.VaultPath, key, resp.Items)
+			_ = localvault.Save(cfg.VaultPath, key, resp.GetItems())
 		}
-		return loadedMsg(resp.Items)
+		return loadedMsg(resp.GetItems())
 	}
 }
 
@@ -1367,23 +1367,23 @@ func (m *Model) copyField(items []*commonpb.VaultItem, field string) tea.Cmd {
 	var text string
 	switch field {
 	case "password":
-		p := parseLoginPayload(item.Payload, item.Metadata)
+		p := parseLoginPayload(item.GetPayload(), item.GetMetadata())
 		text = p.Password
 		// also handle card CVV
 		if text == "" {
-			cp := parseCardPayload(item.Payload, item.Metadata)
+			cp := parseCardPayload(item.GetPayload(), item.GetMetadata())
 			text = cp.CVV
 		}
 	case "username":
-		p := parseLoginPayload(item.Payload, item.Metadata)
+		p := parseLoginPayload(item.GetPayload(), item.GetMetadata())
 		text = p.Username
 	case "totp":
 		// login with embedded TOTP
-		lp := parseLoginPayload(item.Payload, item.Metadata)
+		lp := parseLoginPayload(item.GetPayload(), item.GetMetadata())
 		if lp.TOTPKey != "" {
 			text = m.generateTOTP(lp.TOTPKey)
 		} else {
-			ap := parseAuthPayload(item.Payload, item.Metadata)
+			ap := parseAuthPayload(item.GetPayload(), item.GetMetadata())
 			text = m.generateTOTP(ap.Secret)
 		}
 	}
@@ -1404,7 +1404,7 @@ func (m *Model) exportFile(item *commonpb.VaultItem) tea.Cmd {
 				msg = errMsg(fmt.Errorf("export failed"))
 			}
 		}()
-		p := parseFilePayload(item.Payload, item.Metadata)
+		p := parseFilePayload(item.GetPayload(), item.GetMetadata())
 		if len(p.Data) == 0 {
 			return errMsg(fmt.Errorf("no file data"))
 		}
@@ -1426,7 +1426,7 @@ func (m *Model) exportFile(item *commonpb.VaultItem) tea.Cmd {
 }
 
 func (m *Model) openExportPath(item *commonpb.VaultItem) {
-	p := parseFilePayload(item.Payload, item.Metadata)
+	p := parseFilePayload(item.GetPayload(), item.GetMetadata())
 	home, _ := os.UserHomeDir()
 	defaultPath := filepath.Join(home, "Downloads", p.FileName)
 
@@ -1497,11 +1497,11 @@ func (m *Model) duplicateItem(item *commonpb.VaultItem) tea.Cmd {
 		}()
 		ctx, cancel := m.grpcCtx()
 		defer cancel()
-		_, err := m.vaultSvc.CreateItem(ctx, &vaultpb.CreateItemRequest{
-			Type:     item.Type,
-			Payload:  item.Payload,
-			Metadata: item.Metadata + " (копия)",
-		})
+		_, err := m.vaultSvc.CreateItem(ctx, vaultpb.CreateItemRequest_builder{
+			Type:     item.GetType(),
+			Payload:  item.GetPayload(),
+			Metadata: item.GetMetadata() + " (копия)",
+		}.Build())
 		if err != nil {
 			return errMsg(err)
 		}
@@ -1728,9 +1728,9 @@ func (m *Model) renderList(w, h int) string {
 	}
 
 	for i, item := range items {
-		name := item.Metadata
+		name := item.GetMetadata()
 		if name == "" {
-			name = item.Id[:8]
+			name = item.GetId()[:8]
 		}
 		sub := itemSubtitle(item)
 		selected := i == m.listIdx
@@ -1778,7 +1778,7 @@ func itemIconBadgeForItem(item *commonpb.VaultItem) string {
 	if isSSHKey(item) {
 		return listIconNoteStyle.Render("🗝")
 	}
-	switch item.Type {
+	switch item.GetType() {
 	case commonpb.ItemType_CREDENTIAL:
 		return listIconLoginStyle.Render("🔑")
 	case commonpb.ItemType_CARD:
@@ -1794,27 +1794,27 @@ func itemIconBadgeForItem(item *commonpb.VaultItem) string {
 }
 
 func has2FA(item *commonpb.VaultItem) bool {
-	if item.Type == commonpb.ItemType_OTP {
+	if item.GetType() == commonpb.ItemType_OTP {
 		return true
 	}
-	p := parseLoginPayload(item.Payload, "")
+	p := parseLoginPayload(item.GetPayload(), "")
 	return p.TOTPKey != ""
 }
 
 func itemSubtitle(item *commonpb.VaultItem) string {
-	switch item.Type {
+	switch item.GetType() {
 	case commonpb.ItemType_CREDENTIAL:
-		p := parseLoginPayload(item.Payload, "")
+		p := parseLoginPayload(item.GetPayload(), "")
 		if p.Username != "" {
 			return p.Username
 		}
 	case commonpb.ItemType_CARD:
-		p := parseCardPayload(item.Payload, "")
+		p := parseCardPayload(item.GetPayload(), "")
 		if p.Number != "" && len(p.Number) >= 4 {
 			return "•••• " + p.Number[len(p.Number)-4:]
 		}
 	case commonpb.ItemType_OTP:
-		p := parseAuthPayload(item.Payload, "")
+		p := parseAuthPayload(item.GetPayload(), "")
 		if p.Issuer != "" {
 			return p.Issuer
 		}
@@ -1838,9 +1838,9 @@ func (m *Model) renderDetail(w, h int) string {
 	tw := w - 4 // text width inside panel
 	var sb strings.Builder
 	sb.WriteString("\n")
-	name := item.Metadata
+	name := item.GetMetadata()
 	if name == "" {
-		name = item.Id[:8]
+		name = item.GetId()[:8]
 	}
 	badge := itemIconBadgeForItem(item)
 	favMark := ""
@@ -1855,7 +1855,7 @@ func (m *Model) renderDetail(w, h int) string {
 	sb.WriteString(dimStyle.Render(" "+strings.Repeat("─", tw)) + "\n\n")
 
 	if isFileItem(item) {
-		p := parseFilePayload(item.Payload, item.Metadata)
+		p := parseFilePayload(item.GetPayload(), item.GetMetadata())
 		sb.WriteString(detailSectionStyle.Render(" FILE ATTACHMENT") + "\n")
 		sb.WriteString(dField("📎", "File Name", p.FileName, tw))
 		sb.WriteString(dField("📦", "Size", FormatFileSize(p.Size), tw))
@@ -1870,7 +1870,7 @@ func (m *Model) renderDetail(w, h int) string {
 	}
 
 	if isSSHKey(item) {
-		p := parseSSHKeyPayload(item.Payload, item.Metadata)
+		p := parseSSHKeyPayload(item.GetPayload(), item.GetMetadata())
 		sb.WriteString(detailSectionStyle.Render(" SSH KEY") + "\n")
 		if p.KeyType != "" {
 			sb.WriteString(dField("🗝", "Type", p.KeyType, tw))
@@ -1897,16 +1897,16 @@ func (m *Model) renderDetail(w, h int) string {
 		return panel.Render(sb.String())
 	}
 
-	switch item.Type {
+	switch item.GetType() {
 	case commonpb.ItemType_CREDENTIAL:
 		m.renderLoginDetail(&sb, item, tw)
 	case commonpb.ItemType_CARD:
 		m.renderCardDetail(&sb, item, tw)
 	case commonpb.ItemType_TEXT:
-		p := parseNotePayload(item.Payload, item.Metadata)
+		p := parseNotePayload(item.GetPayload(), item.GetMetadata())
 		sb.WriteString(dField("📝", "Note", p.Content, tw))
 	case commonpb.ItemType_BINARY:
-		p := parseIdentityPayload(item.Payload, item.Metadata)
+		p := parseIdentityPayload(item.GetPayload(), item.GetMetadata())
 		if p.FirstName != "" || p.LastName != "" {
 			sb.WriteString(dField("👤", "Name", p.FirstName+" "+p.LastName, tw))
 		}
@@ -1934,7 +1934,7 @@ func (m *Model) renderDetail(w, h int) string {
 }
 
 func (m *Model) renderLoginDetail(sb *strings.Builder, item *commonpb.VaultItem, tw int) {
-	p := parseLoginPayload(item.Payload, item.Metadata)
+	p := parseLoginPayload(item.GetPayload(), item.GetMetadata())
 
 	if p.Username != "" {
 		sb.WriteString(dField("👤", "Username", p.Username, tw))
@@ -1979,7 +1979,7 @@ func (m *Model) renderLoginDetail(sb *strings.Builder, item *commonpb.VaultItem,
 }
 
 func (m *Model) renderCardDetail(sb *strings.Builder, item *commonpb.VaultItem, tw int) {
-	p := parseCardPayload(item.Payload, item.Metadata)
+	p := parseCardPayload(item.GetPayload(), item.GetMetadata())
 	if p.CardholderName != "" {
 		sb.WriteString(dField("👤", "Cardholder", p.CardholderName, tw))
 	}
@@ -2006,7 +2006,7 @@ func (m *Model) renderCardDetail(sb *strings.Builder, item *commonpb.VaultItem, 
 }
 
 func (m *Model) renderAuthDetail(sb *strings.Builder, item *commonpb.VaultItem) {
-	p := parseAuthPayload(item.Payload, item.Metadata)
+	p := parseAuthPayload(item.GetPayload(), item.GetMetadata())
 	if p.Issuer != "" {
 		sb.WriteString(detailLabelStyle.Render(" 🏢  Issuer") + "\n")
 		sb.WriteString(detailValueStyle.Render("    "+p.Issuer) + "\n")
@@ -2096,9 +2096,9 @@ func (m *Model) renderStatus() string {
 
 		isFile := selItem != nil && isFileItem(selItem)
 		isSSH := selItem != nil && isSSHKey(selItem)
-		isLogin := selItem != nil && (selItem.Type == commonpb.ItemType_CREDENTIAL)
+		isLogin := selItem != nil && (selItem.GetType() == commonpb.ItemType_CREDENTIAL)
 		hasURL := isLogin && func() bool {
-			p := parseLoginPayload(selItem.Payload, selItem.Metadata)
+			p := parseLoginPayload(selItem.GetPayload(), selItem.GetMetadata())
 			return p.URL != ""
 		}()
 
@@ -2114,7 +2114,7 @@ func (m *Model) renderStatus() string {
 		if isLogin {
 			hints = append(hints, hk("c", "copy password"), hk("u", "copy username"), hk("p", "reveal"))
 		}
-		if selItem != nil && selItem.Type == commonpb.ItemType_OTP {
+		if selItem != nil && selItem.GetType() == commonpb.ItemType_OTP {
 			hints = append(hints, hk("c", "copy TOTP"))
 		}
 		if isSSH {
@@ -2169,7 +2169,7 @@ func (m *Model) viewPicker() string {
 func (m *Model) viewDeleteConfirm() string {
 	name := "this item"
 	if m.deleteTarget != nil {
-		name = m.deleteTarget.Metadata
+		name = m.deleteTarget.GetMetadata()
 	}
 	var sb strings.Builder
 	sb.WriteString(lipgloss.NewStyle().Foreground(c(colorRed)).Bold(true).Render("Move to Trash") + "\n\n")

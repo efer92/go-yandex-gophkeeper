@@ -351,21 +351,21 @@ func doLogin(cfg *config.Config, username, password string) (msg tea.Msg) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := client.AuthSvc.Login(ctx, &authpb.LoginRequest{
+	resp, err := client.AuthSvc.Login(ctx, authpb.LoginRequest_builder{
 		Username: username,
 		Password: password,
-	})
+	}.Build())
 	if err != nil {
 		return authErrMsg(fmt.Sprintf("Sign in failed: %v", grpcMsg(err)))
 	}
 
-	if resp.NeedsMfa {
-		return needsMFAMsg{sessionID: resp.SessionId}
+	if resp.GetNeedsMfa() {
+		return needsMFAMsg{sessionID: resp.GetSessionId()}
 	}
 
 	cfg.Username = username
-	cfg.AccessToken = resp.AccessToken
-	cfg.RefreshToken = resp.RefreshToken
+	cfg.AccessToken = resp.GetAccessToken()
+	cfg.RefreshToken = resp.GetRefreshToken()
 	_ = config.Save(cfg)
 	return authDoneMsg{cfg: cfg}
 }
@@ -376,7 +376,10 @@ func doRegister(cfg *config.Config, username, email, password string) (msg tea.M
 			msg = authErrMsg("Сервер недоступен")
 		}
 	}()
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	if err != nil {
+		return authErrMsg(fmt.Sprintf("генерация KDF: %v", err))
+	}
 	masterKey := crypto.DeriveKey([]byte(password), kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 	vaultKey, err := crypto.GenerateVaultSymKey()
@@ -400,13 +403,13 @@ func doRegister(cfg *config.Config, username, email, password string) (msg tea.M
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := client.AuthSvc.Register(ctx, &authpb.RegisterRequest{
+	resp, err := client.AuthSvc.Register(ctx, authpb.RegisterRequest_builder{
 		Username:      username,
 		Email:         email,
 		Password:      password,
 		VaultSymKey:   sealedKey,
 		KdfParamsJson: kdfJSON,
-	})
+	}.Build())
 	if err != nil {
 		return authErrMsg(fmt.Sprintf("Registration failed: %v", grpcMsg(err)))
 	}
@@ -430,16 +433,16 @@ func doMFA(cfg *config.Config, sessionID, code string) (msg tea.Msg) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := client.AuthSvc.VerifyMFA(ctx, &authpb.VerifyMFARequest{
+	resp, err := client.AuthSvc.VerifyMFA(ctx, authpb.VerifyMFARequest_builder{
 		SessionId: sessionID,
 		TotpCode:  code,
-	})
+	}.Build())
 	if err != nil {
 		return authErrMsg(fmt.Sprintf("MFA failed: %v", grpcMsg(err)))
 	}
 
-	cfg.AccessToken = resp.AccessToken
-	cfg.RefreshToken = resp.RefreshToken
+	cfg.AccessToken = resp.GetAccessToken()
+	cfg.RefreshToken = resp.GetRefreshToken()
 	_ = config.Save(cfg)
 	return authDoneMsg{cfg: cfg}
 }

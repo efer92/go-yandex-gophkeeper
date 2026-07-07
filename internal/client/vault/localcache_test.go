@@ -41,8 +41,8 @@ func TestCache_SaveAndLoad_RoundTrip(t *testing.T) {
 	key := vault.CacheKey("refresh-token")
 
 	items := []*commonpb.VaultItem{
-		{Id: "item-1", UserId: "user-1", Type: commonpb.ItemType_CREDENTIAL, Metadata: "github", Version: 1},
-		{Id: "item-2", UserId: "user-1", Type: commonpb.ItemType_TEXT, Metadata: "note", Version: 2},
+		commonpb.VaultItem_builder{Id: "item-1", UserId: "user-1", Type: commonpb.ItemType_CREDENTIAL, Metadata: "github", Version: 1}.Build(),
+		commonpb.VaultItem_builder{Id: "item-2", UserId: "user-1", Type: commonpb.ItemType_TEXT, Metadata: "note", Version: 2}.Build(),
 	}
 
 	require.NoError(t, vault.Save(path, key, items))
@@ -51,9 +51,9 @@ func TestCache_SaveAndLoad_RoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, updatedAt.IsZero())
 	require.Len(t, loaded, 2)
-	assert.Equal(t, "item-1", loaded[0].Id)
-	assert.Equal(t, "github", loaded[0].Metadata)
-	assert.Equal(t, "item-2", loaded[1].Id)
+	assert.Equal(t, "item-1", loaded[0].GetId())
+	assert.Equal(t, "github", loaded[0].GetMetadata())
+	assert.Equal(t, "item-2", loaded[1].GetId())
 }
 
 func TestCache_SaveAndLoad_Empty(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCache_Load_WrongKey(t *testing.T) {
 	key := vault.CacheKey("refresh-token")
 	wrongKey := vault.CacheKey("other-token")
 
-	items := []*commonpb.VaultItem{{Id: "item-1", UserId: "user-1"}}
+	items := []*commonpb.VaultItem{commonpb.VaultItem_builder{Id: "item-1", UserId: "user-1"}.Build()}
 	require.NoError(t, vault.Save(path, key, items))
 
 	_, _, err := vault.Load(path, wrongKey)
@@ -122,5 +122,5 @@ func TestCache_Load_SkipsCorruptedItems(t *testing.T) {
 	loaded, _, err := vault.Load(path, key)
 	require.NoError(t, err)
 	require.Len(t, loaded, 1)
-	assert.Equal(t, "item-1", loaded[0].Id)
+	assert.Equal(t, "item-1", loaded[0].GetId())
 }

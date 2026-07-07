@@ -6,7 +6,7 @@
 // 	protoc        (unknown)
 // source: vault/vault.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package vault
 
@@ -27,12 +27,12 @@ const (
 )
 
 type CreateItemRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Type          common.ItemType        `protobuf:"varint,1,opt,name=type,proto3,enum=common.ItemType" json:"type,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	Metadata      string                 `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Type     common.ItemType        `protobuf:"varint,1,opt,name=type,proto3,enum=common.ItemType"`
+	xxx_hidden_Payload  []byte                 `protobuf:"bytes,2,opt,name=payload,proto3"`
+	xxx_hidden_Metadata string                 `protobuf:"bytes,3,opt,name=metadata,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *CreateItemRequest) Reset() {
@@ -62,38 +62,38 @@ func (x *CreateItemRequest) ProtoReflect() protoreflect.Message {
 
 func (x *CreateItemRequest) GetType() common.ItemType {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return common.ItemType(0)
 }
 
 func (x *CreateItemRequest) GetPayload() []byte {
 	if x != nil {
-		return x.Payload
+		return x.xxx_hidden_Payload
 	}
 	return nil
 }
 
 func (x *CreateItemRequest) GetMetadata() string {
 	if x != nil {
-		return x.Metadata
+		return x.xxx_hidden_Metadata
 	}
 	return ""
 }
 
 func (x *CreateItemRequest) SetType(v common.ItemType) {
-	x.Type = v
+	x.xxx_hidden_Type = v
 }
 
 func (x *CreateItemRequest) SetPayload(v []byte) {
 	if v == nil {
 		v = []byte{}
 	}
-	x.Payload = v
+	x.xxx_hidden_Payload = v
 }
 
 func (x *CreateItemRequest) SetMetadata(v string) {
-	x.Metadata = v
+	x.xxx_hidden_Metadata = v
 }
 
 type CreateItemRequest_builder struct {
@@ -108,17 +108,17 @@ func (b0 CreateItemRequest_builder) Build() *CreateItemRequest {
 	m0 := &CreateItemRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Type = b.Type
-	x.Payload = b.Payload
-	x.Metadata = b.Metadata
+	x.xxx_hidden_Type = b.Type
+	x.xxx_hidden_Payload = b.Payload
+	x.xxx_hidden_Metadata = b.Metadata
 	return m0
 }
 
 type CreateItemResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Item          *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Item *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CreateItemResponse) Reset() {
@@ -148,24 +148,24 @@ func (x *CreateItemResponse) ProtoReflect() protoreflect.Message {
 
 func (x *CreateItemResponse) GetItem() *common.VaultItem {
 	if x != nil {
-		return x.Item
+		return x.xxx_hidden_Item
 	}
 	return nil
 }
 
 func (x *CreateItemResponse) SetItem(v *common.VaultItem) {
-	x.Item = v
+	x.xxx_hidden_Item = v
 }
 
 func (x *CreateItemResponse) HasItem() bool {
 	if x == nil {
 		return false
 	}
-	return x.Item != nil
+	return x.xxx_hidden_Item != nil
 }
 
 func (x *CreateItemResponse) ClearItem() {
-	x.Item = nil
+	x.xxx_hidden_Item = nil
 }
 
 type CreateItemResponse_builder struct {
@@ -178,13 +178,13 @@ func (b0 CreateItemResponse_builder) Build() *CreateItemResponse {
 	m0 := &CreateItemResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Item = b.Item
+	x.xxx_hidden_Item = b.Item
 	return m0
 }
 
 type GetItemRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -216,13 +216,13 @@ func (x *GetItemRequest) ProtoReflect() protoreflect.Message {
 
 func (x *GetItemRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *GetItemRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type GetItemRequest_builder struct {
@@ -235,15 +235,15 @@ func (b0 GetItemRequest_builder) Build() *GetItemRequest {
 	m0 := &GetItemRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type GetItemResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Item          *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Item *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetItemResponse) Reset() {
@@ -273,24 +273,24 @@ func (x *GetItemResponse) ProtoReflect() protoreflect.Message {
 
 func (x *GetItemResponse) GetItem() *common.VaultItem {
 	if x != nil {
-		return x.Item
+		return x.xxx_hidden_Item
 	}
 	return nil
 }
 
 func (x *GetItemResponse) SetItem(v *common.VaultItem) {
-	x.Item = v
+	x.xxx_hidden_Item = v
 }
 
 func (x *GetItemResponse) HasItem() bool {
 	if x == nil {
 		return false
 	}
-	return x.Item != nil
+	return x.xxx_hidden_Item != nil
 }
 
 func (x *GetItemResponse) ClearItem() {
-	x.Item = nil
+	x.xxx_hidden_Item = nil
 }
 
 type GetItemResponse_builder struct {
@@ -303,17 +303,17 @@ func (b0 GetItemResponse_builder) Build() *GetItemResponse {
 	m0 := &GetItemResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Item = b.Item
+	x.xxx_hidden_Item = b.Item
 	return m0
 }
 
 type UpdateItemRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	Metadata      string                 `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id       string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Payload  []byte                 `protobuf:"bytes,2,opt,name=payload,proto3"`
+	xxx_hidden_Metadata string                 `protobuf:"bytes,3,opt,name=metadata,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *UpdateItemRequest) Reset() {
@@ -343,38 +343,38 @@ func (x *UpdateItemRequest) ProtoReflect() protoreflect.Message {
 
 func (x *UpdateItemRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *UpdateItemRequest) GetPayload() []byte {
 	if x != nil {
-		return x.Payload
+		return x.xxx_hidden_Payload
 	}
 	return nil
 }
 
 func (x *UpdateItemRequest) GetMetadata() string {
 	if x != nil {
-		return x.Metadata
+		return x.xxx_hidden_Metadata
 	}
 	return ""
 }
 
 func (x *UpdateItemRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 func (x *UpdateItemRequest) SetPayload(v []byte) {
 	if v == nil {
 		v = []byte{}
 	}
-	x.Payload = v
+	x.xxx_hidden_Payload = v
 }
 
 func (x *UpdateItemRequest) SetMetadata(v string) {
-	x.Metadata = v
+	x.xxx_hidden_Metadata = v
 }
 
 type UpdateItemRequest_builder struct {
@@ -389,17 +389,17 @@ func (b0 UpdateItemRequest_builder) Build() *UpdateItemRequest {
 	m0 := &UpdateItemRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
-	x.Payload = b.Payload
-	x.Metadata = b.Metadata
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Payload = b.Payload
+	x.xxx_hidden_Metadata = b.Metadata
 	return m0
 }
 
 type UpdateItemResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Item          *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Item *common.VaultItem      `protobuf:"bytes,1,opt,name=item,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *UpdateItemResponse) Reset() {
@@ -429,24 +429,24 @@ func (x *UpdateItemResponse) ProtoReflect() protoreflect.Message {
 
 func (x *UpdateItemResponse) GetItem() *common.VaultItem {
 	if x != nil {
-		return x.Item
+		return x.xxx_hidden_Item
 	}
 	return nil
 }
 
 func (x *UpdateItemResponse) SetItem(v *common.VaultItem) {
-	x.Item = v
+	x.xxx_hidden_Item = v
 }
 
 func (x *UpdateItemResponse) HasItem() bool {
 	if x == nil {
 		return false
 	}
-	return x.Item != nil
+	return x.xxx_hidden_Item != nil
 }
 
 func (x *UpdateItemResponse) ClearItem() {
-	x.Item = nil
+	x.xxx_hidden_Item = nil
 }
 
 type UpdateItemResponse_builder struct {
@@ -459,13 +459,13 @@ func (b0 UpdateItemResponse_builder) Build() *UpdateItemResponse {
 	m0 := &UpdateItemResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Item = b.Item
+	x.xxx_hidden_Item = b.Item
 	return m0
 }
 
 type DeleteItemRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -497,13 +497,13 @@ func (x *DeleteItemRequest) ProtoReflect() protoreflect.Message {
 
 func (x *DeleteItemRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *DeleteItemRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type DeleteItemRequest_builder struct {
@@ -516,12 +516,12 @@ func (b0 DeleteItemRequest_builder) Build() *DeleteItemRequest {
 	m0 := &DeleteItemRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type DeleteItemResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -564,12 +564,12 @@ func (b0 DeleteItemResponse_builder) Build() *DeleteItemResponse {
 }
 
 type ListItemsRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	TypeFilter    common.ItemType        `protobuf:"varint,1,opt,name=type_filter,json=typeFilter,proto3,enum=common.ItemType" json:"type_filter,omitempty"`
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	Cursor        string                 `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TypeFilter common.ItemType        `protobuf:"varint,1,opt,name=type_filter,json=typeFilter,proto3,enum=common.ItemType"`
+	xxx_hidden_Limit      int32                  `protobuf:"varint,2,opt,name=limit,proto3"`
+	xxx_hidden_Cursor     string                 `protobuf:"bytes,3,opt,name=cursor,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ListItemsRequest) Reset() {
@@ -599,35 +599,35 @@ func (x *ListItemsRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ListItemsRequest) GetTypeFilter() common.ItemType {
 	if x != nil {
-		return x.TypeFilter
+		return x.xxx_hidden_TypeFilter
 	}
 	return common.ItemType(0)
 }
 
 func (x *ListItemsRequest) GetLimit() int32 {
 	if x != nil {
-		return x.Limit
+		return x.xxx_hidden_Limit
 	}
 	return 0
 }
 
 func (x *ListItemsRequest) GetCursor() string {
 	if x != nil {
-		return x.Cursor
+		return x.xxx_hidden_Cursor
 	}
 	return ""
 }
 
 func (x *ListItemsRequest) SetTypeFilter(v common.ItemType) {
-	x.TypeFilter = v
+	x.xxx_hidden_TypeFilter = v
 }
 
 func (x *ListItemsRequest) SetLimit(v int32) {
-	x.Limit = v
+	x.xxx_hidden_Limit = v
 }
 
 func (x *ListItemsRequest) SetCursor(v string) {
-	x.Cursor = v
+	x.xxx_hidden_Cursor = v
 }
 
 type ListItemsRequest_builder struct {
@@ -642,18 +642,18 @@ func (b0 ListItemsRequest_builder) Build() *ListItemsRequest {
 	m0 := &ListItemsRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.TypeFilter = b.TypeFilter
-	x.Limit = b.Limit
-	x.Cursor = b.Cursor
+	x.xxx_hidden_TypeFilter = b.TypeFilter
+	x.xxx_hidden_Limit = b.Limit
+	x.xxx_hidden_Cursor = b.Cursor
 	return m0
 }
 
 type ListItemsResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Items         []*common.VaultItem    `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
-	NextCursor    string                 `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Items      *[]*common.VaultItem   `protobuf:"bytes,1,rep,name=items,proto3"`
+	xxx_hidden_NextCursor string                 `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ListItemsResponse) Reset() {
@@ -683,24 +683,26 @@ func (x *ListItemsResponse) ProtoReflect() protoreflect.Message {
 
 func (x *ListItemsResponse) GetItems() []*common.VaultItem {
 	if x != nil {
-		return x.Items
+		if x.xxx_hidden_Items != nil {
+			return *x.xxx_hidden_Items
+		}
 	}
 	return nil
 }
 
 func (x *ListItemsResponse) GetNextCursor() string {
 	if x != nil {
-		return x.NextCursor
+		return x.xxx_hidden_NextCursor
 	}
 	return ""
 }
 
 func (x *ListItemsResponse) SetItems(v []*common.VaultItem) {
-	x.Items = v
+	x.xxx_hidden_Items = &v
 }
 
 func (x *ListItemsResponse) SetNextCursor(v string) {
-	x.NextCursor = v
+	x.xxx_hidden_NextCursor = v
 }
 
 type ListItemsResponse_builder struct {
@@ -714,8 +716,8 @@ func (b0 ListItemsResponse_builder) Build() *ListItemsResponse {
 	m0 := &ListItemsResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Items = b.Items
-	x.NextCursor = b.NextCursor
+	x.xxx_hidden_Items = &b.Items
+	x.xxx_hidden_NextCursor = b.NextCursor
 	return m0
 }
 

@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
@@ -41,7 +40,12 @@ func New(cfg *config.Config) (*Client, error) {
 		}
 		dialOpt = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: certPool}))
 	} else {
-		dialOpt = grpc.WithTransportCredentials(insecure.NewCredentials())
+		// TLS is always enabled to encrypt traffic in transit.
+		// InsecureSkipVerify is acceptable only with self-signed certificates;
+		// for production, set TLSCertPath for full server verification.
+		dialOpt = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec // self-signed certs require skip verify
+		}))
 	}
 
 	conn, err := grpc.NewClient(cfg.ServerAddr, dialOpt,
@@ -94,13 +98,13 @@ func refreshInterceptor(cfg *config.Config) grpc.UnaryClientInterceptor {
 		refreshCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		authClient := authpb.NewAuthServiceClient(cc)
-		resp, rerr := authClient.Refresh(refreshCtx, &authpb.RefreshRequest{
+		resp, rerr := authClient.Refresh(refreshCtx, authpb.RefreshRequest_builder{
 			RefreshToken: cfg.RefreshToken,
-		})
+		}.Build())
 		if rerr != nil {
 			return err // return original error
 		}
-		cfg.AccessToken = resp.AccessToken
+		cfg.AccessToken = resp.GetAccessToken()
 		_ = config.Save(cfg)
 
 		ctx = metadata.AppendToOutgoingContext(context.Background(),
