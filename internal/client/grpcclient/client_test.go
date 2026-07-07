@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,11 +13,37 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	authpb "github.com/efer92/go-yandex-gophkeeper/gen/auth"
 	"github.com/efer92/go-yandex-gophkeeper/internal/client/config"
+	"github.com/efer92/go-yandex-gophkeeper/internal/testutil"
 )
 
-func TestNew_Insecure(t *testing.T) {
-	c, err := New(&config.Config{ServerAddr: "localhost:50051"})
+// TestNew_NoCertPathUsesSystemTrustStore confirms that an empty TLSCertPath
+// dials with the OS trust store (not InsecureSkipVerify): a self-signed test
+// server is untrusted by the system CA pool, so the handshake must fail with
+// a certificate verification error rather than succeeding insecurely.
+func TestNew_NoCertPathUsesSystemTrustStore(t *testing.T) {
+	ts, err := testutil.NewTestServer()
+	require.NoError(t, err)
+	defer ts.Stop()
+
+	c, err := New(&config.Config{ServerAddr: ts.Addr})
+	require.NoError(t, err) // dialing is lazy; the error surfaces on first RPC
+	defer c.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	_, err = c.AuthSvc.Login(ctx, authpb.LoginRequest_builder{Username: "x", Password: "y"}.Build())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "certificate")
+}
+
+func TestNew_TLSCertValid(t *testing.T) {
+	ts, err := testutil.NewTestServer()
+	require.NoError(t, err)
+	defer ts.Stop()
+
+	c, err := New(&config.Config{ServerAddr: ts.Addr, TLSCertPath: ts.CertPath})
 	require.NoError(t, err)
 	require.NotNil(t, c)
 	require.NotNil(t, c.Conn())

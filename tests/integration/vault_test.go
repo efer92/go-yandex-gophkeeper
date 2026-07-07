@@ -26,7 +26,8 @@ func TestVaultCRUD(t *testing.T) {
 	defer db.Close()
 
 	// Create a user
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	masterKey := crypto.DeriveKey([]byte("pass"), kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 	vaultKey, _ := crypto.GenerateVaultSymKey()

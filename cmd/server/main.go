@@ -43,10 +43,12 @@ func main() {
 		<-quit
 		logger.Info("shutting down")
 		cancel()
-		application.Shutdown()
+		application.GracefulStop()
 	}()
 
 	if err := application.Run(); err != nil {
 		logger.Error("server stopped", zap.Error(err))
 	}
+
+	application.Close()
 }

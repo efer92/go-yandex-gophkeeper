@@ -16,8 +16,8 @@ import (
 type contextKey string
 
 const (
-	// ContextKeyUserID is the context key for the authenticated user ID.
-	ContextKeyUserID contextKey = "user_id"
+	// contextKeyUserID is the context key for the authenticated user ID.
+	contextKeyUserID contextKey = "user_id"
 )
 
 // publicMethods are RPC paths that do not require authentication.
@@ -70,13 +70,18 @@ func extractAndValidate(ctx context.Context, jwtMgr *jwtpkg.Manager) (context.Co
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	ctx = context.WithValue(ctx, ContextKeyUserID, claims.Subject)
+	ctx = context.WithValue(ctx, contextKeyUserID, claims.Subject)
 	return ctx, nil
+}
+
+// ContextWithUserID returns a new context with the given user ID stored.
+func ContextWithUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, contextKeyUserID, userID)
 }
 
 // UserIDFromContext extracts the authenticated user ID from ctx.
 func UserIDFromContext(ctx context.Context) (string, bool) {
-	v, ok := ctx.Value(ContextKeyUserID).(string)
+	v, ok := ctx.Value(contextKeyUserID).(string)
 	return v, ok
 }
 

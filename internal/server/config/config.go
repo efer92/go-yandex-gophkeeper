@@ -34,12 +34,21 @@ func Load() (*Config, error) {
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")
 	}
+	tlsCertFile := os.Getenv("TLS_CERT_FILE")
+	if tlsCertFile == "" {
+		return nil, fmt.Errorf("TLS_CERT_FILE is required")
+	}
+	tlsKeyFile := os.Getenv("TLS_KEY_FILE")
+	if tlsKeyFile == "" {
+		return nil, fmt.Errorf("TLS_KEY_FILE is required")
+	}
+
 	cfg := &Config{
 		ServerAddr:       getEnv("SERVER_ADDR", ":50051"),
 		DatabaseURL:      dbURL,
 		JWTSecret:        []byte(secret),
-		TLSCertFile:      os.Getenv("TLS_CERT_FILE"),
-		TLSKeyFile:       os.Getenv("TLS_KEY_FILE"),
+		TLSCertFile:      tlsCertFile,
+		TLSKeyFile:       tlsKeyFile,
 		LogLevel:         getEnv("LOG_LEVEL", "info"),
 		AccessTokenTTL:   15 * time.Minute,
 		RefreshTokenTTL:  30 * 24 * time.Hour,
@@ -50,7 +59,7 @@ func Load() (*Config, error) {
 }
 
 func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
+	if v, ok := os.LookupEnv(key); ok {
 		return v
 	}
 	return fallback

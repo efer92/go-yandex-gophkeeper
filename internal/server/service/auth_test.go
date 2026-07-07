@@ -23,7 +23,8 @@ func newTestJWT() *jwtpkg.Manager {
 
 func registerAlice(t *testing.T, svc *service.AuthService) service.RegisterResult {
 	t.Helper()
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	masterKey := crypto.DeriveKey([]byte("alice-password"), kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 	vaultKey, _ := crypto.GenerateVaultSymKey()

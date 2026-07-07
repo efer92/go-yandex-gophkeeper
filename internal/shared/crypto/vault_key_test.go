@@ -28,7 +28,8 @@ func TestSealOpenVaultSymKey_RoundTrip(t *testing.T) {
 	vaultKey, err := crypto.GenerateVaultSymKey()
 	require.NoError(t, err)
 
-	p := crypto.DefaultKDFParams()
+	p, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	masterKey := crypto.DeriveKey([]byte("master-password"), p)
 	encKey, _ := crypto.StretchKey(masterKey)
 
@@ -55,7 +56,8 @@ func TestOpenVaultSymKey_WrongKey(t *testing.T) {
 }
 
 func TestCompositeKey_WithKeyfile(t *testing.T) {
-	p := crypto.DefaultKDFParams()
+	p, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	password := []byte("pass")
 	keyfile := []byte("keyfile-content")
 

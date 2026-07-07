@@ -55,7 +55,8 @@ func TestAuthFlow(t *testing.T) {
 	authSvc := service.NewAuthService(db, jwtMgr)
 
 	// Generate vault key material
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	require.NoError(t, err)
 	masterKey := crypto.DeriveKey([]byte("strong-master-password"), kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 	vaultKey, err := crypto.GenerateVaultSymKey()

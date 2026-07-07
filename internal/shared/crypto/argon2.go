@@ -20,10 +20,10 @@ type KDFParams struct {
 }
 
 // DefaultKDFParams returns the recommended production Argon2id parameters.
-func DefaultKDFParams() KDFParams {
+func DefaultKDFParams() (KDFParams, error) {
 	salt := make([]byte, 32)
 	if _, err := rand.Read(salt); err != nil {
-		panic(fmt.Sprintf("crypto/rand failed: %v", err))
+		return KDFParams{}, fmt.Errorf("generate salt: %w", err)
 	}
 	return KDFParams{
 		Algo:    "argon2id",
@@ -31,7 +31,7 @@ func DefaultKDFParams() KDFParams {
 		Time:    3,
 		Threads: 4,
 		Salt:    salt,
-	}
+	}, nil
 }
 
 // DeriveKey runs Argon2id with p and returns a 32-byte master key.

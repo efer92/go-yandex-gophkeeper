@@ -51,7 +51,10 @@ func NewLocalDB(path string) *LocalDB {
 // Save encrypts and writes VaultData to the .gkdb file.
 // password and optional keyfileData are used to derive the master key.
 func (db *LocalDB) Save(data VaultData, password, keyfileData []byte) error {
-	kdfParams := crypto.DefaultKDFParams()
+	kdfParams, err := crypto.DefaultKDFParams()
+	if err != nil {
+		return fmt.Errorf("generate kdf params: %w", err)
+	}
 	masterKey := crypto.CompositeKey(password, keyfileData, kdfParams)
 	encKey, _ := crypto.StretchKey(masterKey)
 

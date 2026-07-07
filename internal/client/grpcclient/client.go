@@ -26,9 +26,14 @@ type Client struct {
 	AuthSvc authpb.AuthServiceClient
 }
 
-// New dials the server and returns a Client.
+// New dials the server and returns a Client. TLS is always required and the
+// server's certificate is always verified — never skipped. When TLSCertPath
+// is set (self-signed deployments, e.g. via `make tls-dev`), the connection
+// trusts only that certificate. When empty, verification falls back to the
+// OS trust store, which is correct for publicly-trusted certificates (e.g.
+// Let's Encrypt).
 func New(cfg *config.Config) (*Client, error) {
-	var dialOpt grpc.DialOption
+	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS13}
 	if cfg.TLSCertPath != "" {
 		certPool := x509.NewCertPool()
 		cert, err := os.ReadFile(cfg.TLSCertPath)
@@ -38,15 +43,9 @@ func New(cfg *config.Config) (*Client, error) {
 		if !certPool.AppendCertsFromPEM(cert) {
 			return nil, fmt.Errorf("parse tls cert")
 		}
-		dialOpt = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{RootCAs: certPool}))
-	} else {
-		// TLS is always enabled to encrypt traffic in transit.
-		// InsecureSkipVerify is acceptable only with self-signed certificates;
-		// for production, set TLSCertPath for full server verification.
-		dialOpt = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec // self-signed certs require skip verify
-		}))
+		tlsConfig.RootCAs = certPool
 	}
+	dialOpt := grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 
 	conn, err := grpc.NewClient(cfg.ServerAddr, dialOpt,
 		grpc.WithUnaryInterceptor(refreshInterceptor(cfg)),

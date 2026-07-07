@@ -53,16 +53,14 @@ func New(ctx context.Context, cfg *config.Config, logger *zap.Logger) (*App, err
 	syncH := handler.NewSyncHandler(syncSvc, vaultSvc)
 
 	var serverOpts []grpc.ServerOption
-	if cfg.TLSCertFile != "" && cfg.TLSKeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(cfg.TLSCertFile, cfg.TLSKeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("load tls: %w", err)
-		}
-		serverOpts = append(serverOpts, grpc.Creds(credentials.NewTLS(&tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS13,
-		})))
+	cert, err := tls.LoadX509KeyPair(cfg.TLSCertFile, cfg.TLSKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("load tls: %w", err)
 	}
+	serverOpts = append(serverOpts, grpc.Creds(credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13,
+	})))
 
 	rateLimiter := middleware.NewRateLimiter(5, 10) // 5 req/s, burst 10, per IP
 
@@ -101,8 +99,18 @@ func (a *App) Run() error {
 	return a.grpcServer.Serve(lis)
 }
 
+// GracefulStop gracefully stops the gRPC server, causing Run to return.
+func (a *App) GracefulStop() {
+	a.grpcServer.GracefulStop()
+}
+
+// Close releases application resources (database connection pool, etc.).
+func (a *App) Close() {
+	a.db.Close()
+}
+
 // Shutdown gracefully stops the gRPC server and closes the database connection pool.
 func (a *App) Shutdown() {
-	a.grpcServer.GracefulStop()
-	a.db.Close()
+	a.GracefulStop()
+	a.Close()
 }

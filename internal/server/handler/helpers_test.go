@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserIDFromCtx_Present(t *testing.T) {
-	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, "user-42")
+	ctx := middleware.ContextWithUserID(context.Background(), "user-42")
 	id, ok := userIDFromCtx(ctx)
 	assert.True(t, ok)
 	assert.Equal(t, "user-42", id)

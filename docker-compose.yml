@@ -24,8 +24,12 @@ services:
       DATABASE_URL: "postgres://gophkeeper:gophkeeper@postgres:5432/gophkeeper?sslmode=disable"
       JWT_SECRET: "gophkeeper-dev-jwt-secret-32bytes"
       SERVER_ADDR: ":50051"
+      TLS_CERT_FILE: "/certs/server.crt"
+      TLS_KEY_FILE: "/certs/server.key"
     ports:
       - "50051:50051"
+    volumes:
+      - ./testdata/certs:/certs:ro
     restart: unless-stopped
 
 volumes:
